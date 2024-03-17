@@ -347,17 +347,38 @@ local function CreateAction(scene)
     local step = 2.25
     local offset = math3d.Vector3(0.0, 0.0, 4.0)
     local neg_offset = math3d.Vector3(0.0, 0.0, -4.0)
-    local easy_type = {"Linear",
-        "BackIn","BackOut","BackInOut",
-        "BounceOut","BounceIn","BounceInOut",
-        "SineOut","SineIn","SineInOut",
-        "ExponentialOut","ExponentialIn","ExponentialInOut",
-        "ElasticIn","ElasticOut","ElasticInOut"
-    }
-    for _, value in ipairs(easy_type) do
-        AddActionNode(value, pos, ActionBuilder():MoveBy(1.5, offset):DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
-        pos.x = pos.x + step
-    end
+    AddActionNode("Linear", pos, ActionBuilder():MoveBy(1.5, offset):DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("BackIn", pos, ActionBuilder():MoveBy(1.5, offset):BackIn():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("BackOut", pos, ActionBuilder():MoveBy(1.5, offset):BackOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("BackInOut", pos, ActionBuilder():MoveBy(1.5, offset):BackInOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("BounceOut", pos, ActionBuilder():MoveBy(1.5, offset):BounceOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("BounceIn", pos, ActionBuilder():MoveBy(1.5, offset):BounceIn():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("BounceInOut", pos, ActionBuilder():MoveBy(1.5, offset):BounceInOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("SineOut", pos, ActionBuilder():MoveBy(1.5, offset):SineOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("SineIn", pos, ActionBuilder():MoveBy(1.5, offset):SineIn():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("SineInOut", pos, ActionBuilder():MoveBy(1.5, offset):SineInOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("ExponentialOut", pos, ActionBuilder():MoveBy(1.5, offset):ExponentialOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("ExponentialIn", pos, ActionBuilder():MoveBy(1.5, offset):ExponentialIn():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("ExponentialInOut", pos, ActionBuilder():MoveBy(1.5, offset):ExponentialInOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("ElasticIn", pos, ActionBuilder():MoveBy(1.5, offset):ElasticIn():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("ElasticOut", pos, ActionBuilder():MoveBy(1.5, offset):ElasticOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
+    AddActionNode("ElasticInOut", pos, ActionBuilder():MoveBy(1.5, offset):ElasticInOut():DelayTime(1.5):JumpBy(neg_offset):RepeatForever():Build())
+    pos.x = pos.x + step
     AddActionNode("MultiAction", math3d.Vector3(10.5, 4.5, -10.0), ActionBuilder():MoveBy(2.5, math3d.Vector3(0.0, 0.0, 20.0)):MoveBy(2.5, math3d.Vector3(-21.0, 0.0, 0.0)):MoveBy(2.5, math3d.Vector3(0.0, 0.0, -20.0)):JumpBy(math3d.Vector3(21.0, 0.0, 0.0)):RepeatForever():Build())
     for _, action in ipairs(action_nodes) do
         action_manager:AddAction(action[1], action[2])
