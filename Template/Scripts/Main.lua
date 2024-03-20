@@ -109,7 +109,7 @@ function app:OnUpdate(eventType, eventData)
 
     local rotationNode = self.anim_ctrl:GetNode():GetParent()
     local controlDirection = math3d.Vector3.ZERO
-    if FairyGUI.IsJoystickCapture() then
+    if input_system.IsJoystickCapture() then
         controlDirection = math3d.Quaternion(0.0, FairyGUI.GetJoystickRotation() + 180, 0.0) * math3d.Vector3.FORWARD
     else
         if GetPlatformName() == "Android" or GetPlatformName() == "iOS" then
@@ -367,7 +367,7 @@ function app:CreateScene(uiscene)
     view:GetChild("button_back"):SetVisible(false)
     view:GetChild("button_forward"):SetVisible(false)
     view:GetChild("send"):AddEventListener(FairyGUI.EventType.Click, OnSendMessage)
-    FairyGUI.CreateJoystick(view)
+    -- FairyGUI.CreateJoystick(view)
     self.ui_view     = view
     self.input       = view:GetChild("input")
 
@@ -428,7 +428,7 @@ function app:CreateScene(uiscene)
     if not ret then
         print("LoadBank Faied. :", bankname)
     end
-    self.sound_attack = Audio.GetEvent("event:/Scene/attack")
+    self.sound_attack = Audio.CreateEvent("event:/Scene/attack")
     --
     self.fadetime = 0.3
     self.action = false
