@@ -1,3 +1,5 @@
+local Item = require "Scripts/Item"
+local Map = require "Scripts/Map"
 local app = {
     running = false,
     chat_list = {},
@@ -19,7 +21,7 @@ local function SpawnCharacter(parent, name, pos, init_anim)
     local rotNode = jackNode:CreateChild("Model Rotation")
     local graphicNode = rotNode:CreateChild("Graphics")
     jackNode.position = pos or math3d.Vector3(0.0, 0.0, 0.0)
-    graphicNode.scale = math3d.Vector3(0.005, 0.005, 0.005)
+    graphicNode.scale = math3d.Vector3(0.0025, 0.0025, 0.0025)
     local modelObject = graphicNode:CreateComponent(AnimatedModel.id)
     modelObject:SetModel(cache:GetResource("Model", "Models/Blockman/Models/blockman.mdl"))
     modelObject:SetMaterial(cache:GetResource("Material", "Models/Blockman/Materials/Default.xml"))
@@ -42,10 +44,21 @@ local function SpawnCharacter(parent, name, pos, init_anim)
     uiName:SetPivot(0.5, 0.5, true)
     app.actor_name = uiName
 end
-
+local count = 0
+local type = 1
 local function onAttackBtn(eventContext)
     app.action = true
     if app.attack then return end
+    Item:Start(type, math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1)
+    Map:Start({
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1}
+    })
+    count = count + 1
+    type = type + (1 << count)
     app.attack = true
     app.anim_ctrl:Stop(idle_anim, app.fadetime)
     app.anim_ctrl:PlayExisting(AnimationParameters(attack_anim), app.fadetime)
@@ -82,6 +95,7 @@ end
 
 function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
+    Item:Update(timeStep)
     for _, item in ipairs(self.chat_list) do
         item.life = item.life + timeStep
         if item.life > 10.0 then
@@ -155,7 +169,7 @@ function app:OnUpdate(eventType, eventData)
     cameraRotationYaw.rotation = math3d.Quaternion(0.0, self.yaw, 0.0)
     local rotation = cameraRotationYaw.world_rotation
     local movementDirection = rotation * controlDirection
-    local speed = -3.0--input_system:GetKeyDown(input.KEY_SHIFT) and -5.0 or -3.0
+    local speed = -2.5--input_system:GetKeyDown(input.KEY_SHIFT) and -5.0 or -3.0
     local agent = self.agent
     agent:SetTargetVelocity(movementDirection * speed)
 
@@ -187,7 +201,7 @@ function app:OnUpdate(eventType, eventData)
     agentNode.world_position = agent:GetPosition() * math3d.Vector3(1.0, 0.0, 1.0)
     -- Update ui name
     local pos = agentNode.world_position
-    local sp = self.camera:WorldToScreenPoint(math3d.Vector3(pos.x, pos.y + 2.9, pos.z))
+    local sp = self.camera:WorldToScreenPoint(math3d.Vector3(pos.x - 0.25, pos.y + 1.5, pos.z))
     -- self.actor_name:SetPosition(graphics_system.width * sp.x, graphics_system.height * sp.y)
     -- TODO: fix this, ui resolution 1280X720
     self.actor_name:SetPosition(1280 * sp.x, 720 * sp.y)
@@ -263,10 +277,10 @@ local names1 = {"鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗
 local names2 = {"子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"}
 local names3 = {"甲","乙","丙","丁","戊","己","庚","辛","壬","癸"}
 local names4 = {"水瓶","双鱼","白羊","金牛","双子","巨蟹","狮子","处女","天秤","天蝎","射手","摩羯"}
-local function CreateNPC(scene, size, space)
+local function CreateMap(scene, size, space)
     local rs = size + space
     local start_x = rs * 0.5 + rs * (#names1 // 2 - 1)
-    local location = math3d.Vector3(-start_x, 0.5, start_x)
+    local location = math3d.Vector3(-start_x, 0.5, -start_x - 1)
     local model = cache:GetResource("Model", "Models/Box.mdl")
     local mtl = cache:GetResource("Material","Materials/DefaultWhite.xml")
     for i, name in ipairs(names1) do
@@ -290,6 +304,31 @@ local function CreateNPC(scene, size, space)
         text_node.position = math3d.Vector3(-0.5 * bbsize.x, 1.0, 0.0)
         location.x = location.x + rs
     end
+    local node = scene:CreateChild("LeftWall")
+    node.position = math3d.Vector3(-6.5, 0.5, 0.0)
+    node.scale = math3d.Vector3(1, 1, 14)
+    local object = node:CreateComponent(StaticModel.id)
+    object:SetModel(model)
+    object:SetMaterial(mtl:Clone())
+    object:SetCastShadows(true)
+
+    node = scene:CreateChild("RightWall")
+    node.position = math3d.Vector3(6.5, 0.5, 0.0)
+    node.scale = math3d.Vector3(1, 1, 14)
+    object = node:CreateComponent(StaticModel.id)
+    object:SetModel(model)
+    object:SetMaterial(mtl:Clone())
+    object:SetCastShadows(true)
+
+    node = scene:CreateChild("BottomWall")
+    node.position = math3d.Vector3(0.0, 0.5, 6.5)
+    node.scale = math3d.Vector3(12, 1, 1)
+    object = node:CreateComponent(StaticModel.id)
+    object:SetModel(model)
+    object:SetMaterial(mtl:Clone())
+    object:SetCastShadows(true)
+
+    Map:Init(scene, start_x)
 end
 
 local function CreateWorld(scene)
@@ -299,25 +338,32 @@ local function CreateWorld(scene)
     shape:SetStaticPlane()
 
     local node = scene:GetChild("Sphere");
-    local object = node:GetComponent(StaticModel.id)
-    -- material animation
-    local colorAnimation = ValueAnimation()
-    colorAnimation:SetKeyFrame(0.0, Variant(math3d.Color(1.0, 1.0, 1.0, 1.0)))
-    colorAnimation:SetKeyFrame(1.0, Variant(math3d.Color(1.0, 0.0, 0.0, 1.0)))
-    colorAnimation:SetKeyFrame(2.0, Variant(math3d.Color(0.0, 1.0, 0.0, 1.0)))
-    colorAnimation:SetKeyFrame(3.0, Variant(math3d.Color(0.0, 0.0, 1.0, 1.0)))
-    colorAnimation:SetKeyFrame(4.0, Variant(math3d.Color(1.0, 1.0, 1.0, 1.0)))
-    local mtl = object:GetMaterial():Clone()
-    mtl:SetShaderParameterAnimation("MatDiffColor", colorAnimation)
-    object:SetMaterial(mtl)
+    node:SetEnabled(false)
+    node = scene:GetChild("TransparentBox")
+    node:SetEnabled(false)
+    -- local object = node:GetComponent(StaticModel.id)
+    -- -- material animation
+    -- local colorAnimation = ValueAnimation()
+    -- colorAnimation:SetKeyFrame(0.0, Variant(math3d.Color(1.0, 1.0, 1.0, 1.0)))
+    -- colorAnimation:SetKeyFrame(1.0, Variant(math3d.Color(1.0, 0.0, 0.0, 1.0)))
+    -- colorAnimation:SetKeyFrame(2.0, Variant(math3d.Color(0.0, 1.0, 0.0, 1.0)))
+    -- colorAnimation:SetKeyFrame(3.0, Variant(math3d.Color(0.0, 0.0, 1.0, 1.0)))
+    -- colorAnimation:SetKeyFrame(4.0, Variant(math3d.Color(1.0, 1.0, 1.0, 1.0)))
+    -- local mtl = object:GetMaterial():Clone()
+    -- mtl:SetShaderParameterAnimation("MatDiffColor", colorAnimation)
+    -- object:SetMaterial(mtl)
 
     node = scene:GetChild("Box")
-    object = node:GetComponent(StaticModel.id)
-    mtl = cache:GetResource("Material","Materials/GreenTransparent.xml"):Clone()
-    mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(1.0, 1.0, 1.0, 0.5)))
+    node.position = math3d.Vector3(0.0, 2.0, 0.0)
+    local object = node:GetComponent(StaticModel.id)
+    local mtl = cache:GetResource("Material","Materials/GreenTransparent.xml"):Clone()
+    mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 1.0, 0.0, 0.5)))
     object:SetMaterial(mtl)
 
-    CreateNPC(scene, 1, 0.5)
+    local action = ActionBuilder():RotateBy(1.0, math3d.Quaternion(math3d.Vector3(180, 0, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 180, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 0, 180))):DelayTime(0.5):RepeatForever():Build()
+    action_manager:AddAction(action, node)
+
+    CreateMap(scene, 1, 0.0)
 end
 
 function ShowMessage(msg)
@@ -394,6 +440,7 @@ function app:CreateScene(uiscene)
     local groundNode = scene:GetChild("Ground Plane")
     local scale = 128
     groundNode:SetScale(scale)
+    groundNode.position = math3d.Vector3(0.0, -0.05, 0.0)
     local mtl = groundNode:GetComponent(StaticModel.id).material
     mtl:SetShaderParameter("UOffset", Variant(math3d.Vector4(scale / 2, 0.0, 0.0, 0.0)))
     mtl:SetShaderParameter("VOffset", Variant(math3d.Vector4(0.0, scale / 2, 0.0, 0.0)))
@@ -454,10 +501,10 @@ function app:CreateScene(uiscene)
     -- create effect
     local attackEmitter = scene:CreateChild("effect2")
     attackEmitter.position = math3d.Vector3.ZERO
-    attackEmitter.scale = math3d.Vector3(0.2, 0.2, 0.2)
+    attackEmitter.scale = math3d.Vector3(0.1, 0.1, 0.1)
     local attackEffect = attackEmitter:CreateComponent(EffekseerEmitter.id)
     attackEffect:SetEffect("Effekseer/01_Suzuki01/002_sword_effect/sword_effect.efk")
-    attackEffect:SetSpeed(2.0)
+    attackEffect:SetSpeed(1.0)
     attackEffect:SetLooping(false)
     self.attack_emitter = attackEmitter
     self.attack_effect = attackEffect
@@ -478,6 +525,8 @@ function app:CreateScene(uiscene)
     self.fadetime = 0.3
     self.action = false
     self.attack = false
+
+    Item:Init(scene)
 end
 
 function app:Load(viewport, uiroot)
