@@ -50,7 +50,8 @@ local function onAttackBtn(eventContext)
     if app.attack then
         return
     end
-    Item:Start(15, math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1)
+    local wp = app.agent:GetNode().world_position
+    Item:Start(15, math.floor(wp.z + 6.0) + 1, math.floor(wp.x + 6.0) + 1)
     Map:StartRise({
         {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
         {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
@@ -101,6 +102,7 @@ function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
     self.cube:Rotate(rotation_speed.x * timeStep, rotation_speed.y * timeStep, rotation_speed.z * timeStep)
     Item:Update(timeStep)
+    Map:Update()
     for _, item in ipairs(self.chat_list) do
         item.life = item.life + timeStep
         if item.life > 10.0 then
@@ -357,7 +359,7 @@ local function CreateWorld(scene)
     -- object:SetMaterial(mtl)
 
     node = scene:GetChild("Box")
-    node.position = math3d.Vector3(0.0, 2.0, 0.0)
+    node.position = math3d.Vector3(0.0, 3.0, 0.0)
     local object = node:GetComponent(StaticModel.id)
     local mtl = cache:GetResource("Material","Materials/GreenTransparent.xml"):Clone()
     mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 1.0, 0.0, 0.5)))

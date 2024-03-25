@@ -32,11 +32,10 @@ function m:Init(scene, start_x)
             end
             map_row[#map_row + 1] = {
                 color = map_color[ci],
-                node = create_cube(position, map_color[ci])
+                node = create_cube(scene, position, map_color[ci])
             }
 
-            position.y = position.y + 2.0
-            local node = create_cube(position, math3d.Color(0.5, 0.0, 0.0, 1.0))
+            local node = create_cube(scene, math3d.Vector3(position.x, position.y + 3.0, position.z), math3d.Color(0.5, 0.0, 0.0, 1.0))
             node:SetEnabled(false)
             ceil_row[#ceil_row + 1] = {
                 node = node
@@ -46,53 +45,64 @@ function m:Init(scene, start_x)
         self.ceil[#self.ceil+1] = ceil_row
     end
 end
-
+function m:Update()
+    if self.last_rise_coords then
+        local c = self.last_rise_coords[1]
+        local cn = self.map[c[1]][c[2]]
+        if action_manager:GetNumActions(cn.node) == 0 then
+            for _, coord in ipairs(self.last_rise_coords) do
+                local map_node = self.map[coord[1]][coord[2]]
+                local node = map_node.node
+                local pos = node.position
+                node.position = math3d.Vector3(pos.x, -0.5, pos.z)
+                local object = node:GetComponent(StaticModel.id)
+                local mtl = object:GetMaterial()
+                mtl:SetShaderParameter("MatDiffColor", Variant(map_node.color))
+            end
+            self.last_rise_coords = nil
+        end
+    end
+    
+    if self.last_fall_coords then
+        local c = self.last_fall_coords[1]
+        local cn = self.ceil[c[1]][c[2]]
+        if action_manager:GetNumActions(cn.node) == 0 then
+            for _, coord in ipairs(self.last_fall_coords) do
+                local ceil_node = self.ceil[coord[1]][coord[2]]
+                local pos = ceil_node.node.position
+                ceil_node.node.position = math3d.Vector3(pos.x, pos.y + 2, pos.z)
+                ceil_node.node:SetEnabled(false)
+            end
+            self.last_fall_coords = nil
+        end
+    end
+end
 function m:StartRise(coords)
     if self.last_rise_coords then
-        for _, coord in ipairs(self.last_rise_coords) do
-            local map_node = self.map[coord[1]][coord[2]]
-            local node = map_node.node
-            local pos = node.position
-            node.position = math3d.Vector3(pos.x, -0.5, pos.z)
-            local object = node:GetComponent(StaticModel.id)
-            local mtl = object:GetMaterial()
-            mtl:SetShaderParameter("MatDiffColor", Variant(map_node.color))
-        end
+        return
     end
     for _, coord in ipairs(coords) do
         local map_node = self.map[coord[1]][coord[2]]
-        action_manager:CancelAllActionsFromTarget(map_node.node)
-        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0, 1, 0)):DelayTime(0.5):JumpBy(math3d.Vector3(0, -1, 0)):Build()
+        -- action_manager:CancelAllActionsFromTarget(map_node.node)
+        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0, 1, 0)):ExponentialIn():DelayTime(1.0):JumpBy(math3d.Vector3(0, -1, 0)):Build()
         action_manager:AddAction(action, map_node.node)
         local object = map_node.node:GetComponent(StaticModel.id)
         local mtl = object:GetMaterial()
-        mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 0.0, 1.0, 1.0)))
+        mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)))
     end
     self.last_rise_coords = coords
 end
 
 function m:StartFall(coords)
     if self.last_fall_coords then
-        local c = self.last_fall_coords[1]
-        local cn = self.ceil[c[1]][c[2]]
-        if cn.action_state:IsDone() then
-            for _, coord in ipairs(self.last_fall_coords) do
-                local ceil_node = self.ceil[coord[1]][coord[2]]
-                local pos = ceil_node.position
-                pos.y = pos.y + 1
-                ceil_node.node.position = pos
-                ceil_node.node:SetEnabled(false)
-                ceil_node.action_state = nil
-            end
-            self.last_fall_coords = nil
-        end
+        return
     end
     for _, coord in ipairs(coords) do
-        local ceil_node = self.map[coord[1]][coord[2]]
+        local ceil_node = self.ceil[coord[1]][coord[2]]
         ceil_node.node:SetEnabled(true)
-        action_manager:CancelAllActionsFromTarget(ceil_node.node)
-        local action = ActionBuilder():MoveBy(-1.0, math3d.Vector3(0, 1, 0)):DelayTime(0.5):Build()
-        ceil_node.action_state = action_manager:AddAction(action, ceil_node.node)
+        -- action_manager:CancelAllActionsFromTarget(ceil_node.node)
+        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0.0, -2.0, 0.0)):BackIn():DelayTime(1.0):Build()
+        action_manager:AddAction(action, ceil_node.node)
     end
     self.last_fall_coords = coords
 end

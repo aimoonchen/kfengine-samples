@@ -79,10 +79,10 @@ function m:CreateItemNode(pos)
     return node
 end
 
-function m:Start(type, cx, cy)
+function m:Start(type, row, col)
     local pos = math3d.Vector3(-5.5, 0.5, -5.5)
-    pos.x = pos.x + (cx - 1)
-    pos.z = pos.z + (cy - 1)
+    pos.x = pos.x + (col - 1)
+    pos.z = pos.z + (row - 1)
     if type & 1 ~= 0 then
         self.items[1].node.position = pos
         self.items[1].active = true
