@@ -44,21 +44,25 @@ local function SpawnCharacter(parent, name, pos, init_anim)
     uiName:SetPivot(0.5, 0.5, true)
     app.actor_name = uiName
 end
-local count = 0
-local type = 1
+
 local function onAttackBtn(eventContext)
     app.action = true
-    if app.attack then return end
-    Item:Start(type, math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1)
-    Map:Start({
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+    if app.attack then
+        return
+    end
+    Item:Start(15, math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1)
+    Map:StartRise({
         {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
         {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
         {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
         {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1}
     })
-    count = count + 1
-    type = type + (1 << count)
+    Map:StartFall({
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
+        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1}
+    })
     app.attack = true
     app.anim_ctrl:Stop(idle_anim, app.fadetime)
     app.anim_ctrl:PlayExisting(AnimationParameters(attack_anim), app.fadetime)
@@ -92,9 +96,10 @@ local function Raycast(maxDistance)
 
     return nil, nil
 end
-
+local rotation_speed = math3d.Vector3(20.0, 40.0, 60.0)
 function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
+    self.cube:Rotate(rotation_speed.x * timeStep, rotation_speed.y * timeStep, rotation_speed.z * timeStep)
     Item:Update(timeStep)
     for _, item in ipairs(self.chat_list) do
         item.life = item.life + timeStep
@@ -149,26 +154,24 @@ function app:OnUpdate(eventType, eventData)
             if not FairyGUI.IsInputing() then
                 if input_system:GetKeyDown(input.KEY_W) then
                     controlDirection = controlDirection + math3d.Vector3.BACK
-                end
-                if input_system:GetKeyDown(input.KEY_S) then
+                elseif input_system:GetKeyDown(input.KEY_S) then
                     controlDirection = controlDirection + math3d.Vector3.FORWARD
-                end
-                if input_system:GetKeyDown(input.KEY_A) then
+                elseif input_system:GetKeyDown(input.KEY_A) then
                     controlDirection = controlDirection + math3d.Vector3.RIGHT
-                end
-                if input_system:GetKeyDown(input.KEY_D) then
+                elseif input_system:GetKeyDown(input.KEY_D) then
                     controlDirection = controlDirection + math3d.Vector3.LEFT
                 end
             end
         end
     end
     
-    local cameraRotationPitch = self.camera_node:GetParent();
-    local cameraRotationYaw = cameraRotationPitch:GetParent();
-    cameraRotationPitch.rotation = math3d.Quaternion(self.pitch, 0.0, 0.0)
-    cameraRotationYaw.rotation = math3d.Quaternion(0.0, self.yaw, 0.0)
-    local rotation = cameraRotationYaw.world_rotation
-    local movementDirection = rotation * controlDirection
+    -- local cameraRotationPitch = self.camera_node:GetParent();
+    -- local cameraRotationYaw = cameraRotationPitch:GetParent();
+    -- cameraRotationPitch.rotation = math3d.Quaternion(self.pitch, 0.0, 0.0)
+    -- cameraRotationYaw.rotation = math3d.Quaternion(0.0, self.yaw, 0.0)
+    -- local rotation = cameraRotationYaw.world_rotation
+    -- local movementDirection = rotation * controlDirection
+    local movementDirection = controlDirection
     local speed = -2.5--input_system:GetKeyDown(input.KEY_SHIFT) and -5.0 or -3.0
     local agent = self.agent
     agent:SetTargetVelocity(movementDirection * speed)
@@ -360,8 +363,8 @@ local function CreateWorld(scene)
     mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 1.0, 0.0, 0.5)))
     object:SetMaterial(mtl)
 
-    local action = ActionBuilder():RotateBy(1.0, math3d.Quaternion(math3d.Vector3(180, 0, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 180, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 0, 180))):DelayTime(0.5):RepeatForever():Build()
-    action_manager:AddAction(action, node)
+    -- local action = ActionBuilder():RotateBy(1.0, math3d.Quaternion(math3d.Vector3(180, 0, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 180, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 0, 180))):DelayTime(0.5):RepeatForever():Build()
+    -- action_manager:AddAction(action, node)
 
     CreateMap(scene, 1, 0.0)
 end
@@ -475,13 +478,15 @@ function app:CreateScene(uiscene)
     self.anim_ctrl  = anim_ctrl
 
     -- create camera
-    local cryNode = scene:GetChild("Actor", true):CreateChild("Camera Yaw")
-    cryNode.rotation = math3d.Quaternion(0.0, self.yaw, 0.0)
-    local crpNode = cryNode:CreateChild("Camera Pitch")
-    crpNode.position = math3d.Vector3(0.0, 2.0, 0)
-    crpNode.rotation = math3d.Quaternion(self.pitch, 0.0, 0.0)
-    local cameraNode = crpNode:CreateChild("Camera")
-    cameraNode.position = math3d.Vector3(0.0, 0.0, -10.0)
+    -- local cryNode = scene:GetChild("Actor", true):CreateChild("Camera Yaw")
+    -- cryNode.rotation = math3d.Quaternion(0.0, self.yaw, 0.0)
+    -- local crpNode = cryNode:CreateChild("Camera Pitch")
+    -- crpNode.position = math3d.Vector3(0.0, 2.0, 0)
+    -- crpNode.rotation = math3d.Quaternion(self.pitch, 0.0, 0.0)
+    -- local cameraNode = crpNode:CreateChild("Camera")
+    local cameraNode = scene:CreateChild("Camera")
+    cameraNode.position = math3d.Vector3(0.0, 9.5, -9.5)
+    cameraNode:LookAt(math3d.Vector3(0.0, 0.0, -1.25))
     local camera = cameraNode:CreateComponent(Camera.id)
     
     self.camera         = camera
@@ -527,6 +532,7 @@ function app:CreateScene(uiscene)
     self.attack = false
 
     Item:Init(scene)
+    self.cube = scene:GetChild("Box")
 end
 
 function app:Load(viewport, uiroot)

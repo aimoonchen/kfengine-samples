@@ -233,7 +233,7 @@ function Mover:Update(timeStep)
 end
 
 local function CreateWorld(scene)
-    local planeNode = scene:CreateChild("Ground Plane");
+    local planeNode = scene:GetChild("Ground Plane");
     planeNode:CreateComponent(RigidBody.id)
     local shape = planeNode:CreateComponent(CollisionShape.id)
     shape:SetStaticPlane()
