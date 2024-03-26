@@ -11,17 +11,49 @@ local function create_cube(scene, position, color)
     object:SetCastShadows(true)
     return node
 end
+
+local function create_effect(scene, name, filename, position, scale)
+    local emitter = scene:CreateChild(name or "effect")
+    emitter.position = position
+    emitter.scale = scale or math3d.Vector3.ONE
+    local effect = emitter:CreateComponent(EffekseerEmitter.id)
+    effect:SetEffect(filename)
+    effect:SetLooping(true)
+    return effect
+end
+
 function m:Init(scene, start_x)
     self.scene = scene
+    self.mesh_line = scene:GetComponent(MeshLine.id)
+    local grid_linedesc = MeshLineDesc()
+    grid_linedesc.width = 10
+    grid_linedesc.attenuation = false
+    grid_linedesc.depth = true
+    grid_linedesc.cache = true
+    grid_linedesc.color = math3d.Color(1.0, 1.0, 0.0, 0.8)
+    grid_linedesc.depth_bias = 0.05
+    self.grid_linedesc = grid_linedesc
+
+    local size = 1
+    local gap = 0.1
+    local round = 0.1
     local map_color = {math3d.Color(0.25, 0.25, 0.25, 1.0), math3d.Color(0.5, 0.5, 0.5, 1.0)}
     self.map = {}
     self.ceil = {}
+    self.grids = {}
     for i = 1, 12 do
         local map_row = {}
         local ceil_row = {}
+        local grid_row = {}
         local position = math3d.Vector3(0.0, -0.5, -start_x + (i - 1))
         for j = 1, 12 do
             position.x = -start_x + (j - 1)
+            -- grid
+            local grid = self.mesh_line:AddGrid(1, 1, size, gap, round, self.grid_linedesc)
+            grid.model_mat = math3d.Matrix3x4(math3d.Vector3(position.x, 0.025, position.z), math3d.Quaternion.IDENTITY, 1.0)
+            grid.visible = false
+            grid_row[#grid_row + 1] = grid
+
             local ci = ((i % 2) == 0) and 1 or 2
             if (j % 2) == 0 then
                 if ci > 1 then
@@ -41,10 +73,25 @@ function m:Init(scene, start_x)
                 node = node
             }
         end
-        self.map[#self.map+1] = map_row
-        self.ceil[#self.ceil+1] = ceil_row
+        self.map[#self.map + 1] = map_row
+        self.ceil[#self.ceil + 1] = ceil_row
+        self.grids[#self.grids + 1] = grid_row
+    end
+
+    self.effects = {
+        firball = create_effect(scene, "firball", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 3, 0.5, -5.5 + 4), math3d.Vector3(0.25, 0.25, 0.25)),
+        -- flame = create_effect(scene, "flame", "Effekseer/01_Pierre01/Flame.efk", math3d.Vector3(-5.5 + 5, 0.2, -5.5 + 5)),
+        shield = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 9, 0.0, -5.5 + 6), math3d.Vector3(0.15, 0.15, 0.15)),
+    }
+    for _, e in pairs(self.effects) do
+        e:Play()
     end
 end
+
+function m:ShowGrid(row, col, visible)
+    self.grids[row][col].visible = visible
+end
+
 function m:Update()
     if self.last_rise_coords then
         local c = self.last_rise_coords[1]
@@ -58,6 +105,7 @@ function m:Update()
                 local object = node:GetComponent(StaticModel.id)
                 local mtl = object:GetMaterial()
                 mtl:SetShaderParameter("MatDiffColor", Variant(map_node.color))
+                self:ShowGrid(coord[1], coord[2], false)
             end
             self.last_rise_coords = nil
         end
@@ -72,11 +120,17 @@ function m:Update()
                 local pos = ceil_node.node.position
                 ceil_node.node.position = math3d.Vector3(pos.x, pos.y + 2, pos.z)
                 ceil_node.node:SetEnabled(false)
+                self:ShowGrid(coord[1], coord[2], false)
             end
             self.last_fall_coords = nil
         end
     end
 end
+
+function m:StartEffect(name, coord)
+
+end
+
 function m:StartRise(coords)
     if self.last_rise_coords then
         return
@@ -89,6 +143,7 @@ function m:StartRise(coords)
         local object = map_node.node:GetComponent(StaticModel.id)
         local mtl = object:GetMaterial()
         mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)))
+        self:ShowGrid(coord[1], coord[2], true)
     end
     self.last_rise_coords = coords
 end
@@ -103,6 +158,7 @@ function m:StartFall(coords)
         -- action_manager:CancelAllActionsFromTarget(ceil_node.node)
         local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0.0, -2.0, 0.0)):BackIn():DelayTime(1.0):Build()
         action_manager:AddAction(action, ceil_node.node)
+        self:ShowGrid(coord[1], coord[2], true)
     end
     self.last_fall_coords = coords
 end
