@@ -19,7 +19,7 @@ local function create_effect(scene, name, filename, position, scale)
     local effect = emitter:CreateComponent(EffekseerEmitter.id)
     effect:SetEffect(filename)
     effect:SetLooping(true)
-    return effect
+    return effect, emitter
 end
 
 function m:Init(scene, start_x)
@@ -77,12 +77,32 @@ function m:Init(scene, start_x)
         self.ceil[#self.ceil + 1] = ceil_row
         self.grids[#self.grids + 1] = grid_row
     end
-
+    local fireball1, node1 = create_effect(scene, "fireball1", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 5, 0.5, -5.5 + 5), math3d.Vector3(0.25, 0.25, 0.25))
+    local fireball2, node2 = create_effect(scene, "fireball2", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 6, 0.5, -5.5 + 6), math3d.Vector3(0.25, 0.25, 0.25))
+    local shield = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 9, 0.0, -5.5 + 6), math3d.Vector3(0.15, 0.15, 0.15))
     self.effects = {
-        firball = create_effect(scene, "firball", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 3, 0.5, -5.5 + 4), math3d.Vector3(0.25, 0.25, 0.25)),
+        fireball1 = fireball1,
+        fireball2 = fireball2,
         -- flame = create_effect(scene, "flame", "Effekseer/01_Pierre01/Flame.efk", math3d.Vector3(-5.5 + 5, 0.2, -5.5 + 5)),
-        shield = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 9, 0.0, -5.5 + 6), math3d.Vector3(0.15, 0.15, 0.15)),
+        shield = shield,
     }
+    shield:SetSpeed(0.5)
+    local action1 = ActionBuilder():MoveBy(2.5, math3d.Vector3(0, 0, -5)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, 11)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, -11)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, 11)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, -11)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, 11)):JumpBy(math3d.Vector3(5, 0.0, -6))
+        :RepeatForever():Build()
+    action_manager:AddAction(action1, node1)
+    local action2 = ActionBuilder():MoveBy(2.5, math3d.Vector3(0, 0, 5)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, -11)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, 11)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, -11)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, 11)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
+        :MoveBy(5.0, math3d.Vector3(0, 0, -11)):JumpBy(math3d.Vector3(-5, 0.0, 6))
+        :RepeatForever():Build()
+    action_manager:AddAction(action2, node2)
     for _, e in pairs(self.effects) do
         e:Play()
     end
