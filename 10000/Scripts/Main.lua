@@ -1,5 +1,7 @@
 local Item = require "Scripts/Item"
 local Map = require "Scripts/Map"
+local Utils = require "Scripts/Utils"
+
 local app = {
     running = false,
     chat_list = {},
@@ -8,7 +10,7 @@ local app = {
     MOVE_SPEED = 6.0,
     character = {}
 }
-
+local OutlineTag = "Outline"
 function app:GetName()
     return "Template"
 end
@@ -22,6 +24,7 @@ local function SpawnCharacter(parent, name, pos, init_anim)
     local graphicNode = rotNode:CreateChild("Graphics")
     jackNode.position = pos or math3d.Vector3(0.0, 0.0, 0.0)
     graphicNode.scale = math3d.Vector3(0.0025, 0.0025, 0.0025)
+    graphicNode:AddTag(OutlineTag)
     local modelObject = graphicNode:CreateComponent(AnimatedModel.id)
     modelObject:SetModel(cache:GetResource("Model", "Models/Blockman/Models/blockman.mdl"))
     modelObject:SetMaterial(cache:GetResource("Material", "Models/Blockman/Materials/Default.xml"))
@@ -45,6 +48,7 @@ local function SpawnCharacter(parent, name, pos, init_anim)
     app.actor_name = uiName
 end
 
+local MagicType = 0
 local function onAttackBtn(eventContext)
     app.action = true
     if app.attack then
@@ -52,18 +56,25 @@ local function onAttackBtn(eventContext)
     end
     local wp = app.agent:GetNode().world_position
     Item:Start(15, math.floor(wp.z + 6.0) + 1, math.floor(wp.x + 6.0) + 1)
-    Map:StartRise({
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1}
-    })
-    Map:StartFall({
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1},
-        {math.floor(math3d.Random(12)) + 1, math.floor(math3d.Random(12)) + 1}
-    })
+    local rows = Utils.MultiRandom(1, 12, 8)
+    local cols = Utils.MultiRandom(1, 12, 8)
+    if (MagicType % 2) == 0 then
+        Map:StartRise({
+            {rows[1], cols[1]},
+            {rows[2], cols[2]},
+            {rows[3], cols[3]},
+            {rows[4], cols[4]}
+        })
+    else
+        Map:StartFall({
+            {rows[5], cols[5]},
+            {rows[6], cols[6]},
+            {rows[7], cols[7]},
+            {rows[8], cols[8]}
+        })
+    end
+    MagicType = MagicType + 1
+
     app.attack = true
     app.anim_ctrl:Stop(idle_anim, app.fadetime)
     app.anim_ctrl:PlayExisting(AnimationParameters(attack_anim), app.fadetime)
@@ -97,12 +108,13 @@ local function Raycast(maxDistance)
 
     return nil, nil
 end
+
 local rotation_speed = math3d.Vector3(20.0, 40.0, 60.0)
 function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
     self.cube:Rotate(rotation_speed.x * timeStep, rotation_speed.y * timeStep, rotation_speed.z * timeStep)
     Item:Update(timeStep)
-    Map:Update()
+    Map:Update(timeStep)
     for _, item in ipairs(self.chat_list) do
         item.life = item.life + timeStep
         if item.life > 10.0 then
@@ -118,8 +130,8 @@ function app:OnUpdate(eventType, eventData)
     end
     if click then
         app.outline_group:ClearDrawables()
-        local pos, drawable = Raycast(300)
-        if drawable and drawable:GetNode().name ~= "Ground Plane" then
+        local _, drawable = Raycast(300)
+        if drawable and drawable:GetNode():HasTag(OutlineTag) then
             app.outline_group:AddDrawable(drawable)
         end
     end
@@ -364,9 +376,9 @@ local function CreateWorld(scene)
     local mtl = cache:GetResource("Material","Materials/GreenTransparent.xml"):Clone()
     mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 1.0, 0.0, 0.5)))
     object:SetMaterial(mtl)
-
-    -- local action = ActionBuilder():RotateBy(1.0, math3d.Quaternion(math3d.Vector3(180, 0, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 180, 0))):DelayTime(0.5):RotateBy(1.0, math3d.Quaternion(math3d.Vector3(0, 0, 180))):DelayTime(0.5):RepeatForever():Build()
-    -- action_manager:AddAction(action, node)
+    
+    -- local action = ActionBuilder():ShaderParameterFromTo(2.0, "MatDiffColor", Variant(math3d.Color(0.0, 1.0, 0.0, 0.0)), Variant(math3d.Color(0.0, 1.0, 0.0, 1.0))):ShaderParameterFromTo(2.0, "MatDiffColor", Variant(math3d.Color(0.0, 1.0, 0.0, 1.0)), Variant(math3d.Color(0.0, 1.0, 0.0, 0.0))):RepeatForever():Build()
+    -- action_manager:AddAction(action, mtl)
 
     CreateMap(scene, 1, 0.0)
 end
@@ -471,7 +483,7 @@ function app:CreateScene(uiscene)
     --create world
     CreateWorld(scene)
     CreateNavi(scene)
-    SpawnCharacter(scene, "Actor")
+    SpawnCharacter(scene, "Actor", math3d.Vector3(0, 0, -2))
     local agent = scene:GetComponent(CrowdAgent.id, true)
     agent:SetUpdateNodePosition(false)
     local agentNode = agent:GetNode()

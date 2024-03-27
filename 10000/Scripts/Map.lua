@@ -1,11 +1,11 @@
 local m = {}
 
-local function create_cube(scene, position, color)
+local function create_cube(scene, position, color, translucent)
     local node = scene:CreateChild("")
     node.position = position
     local object = node:CreateComponent(StaticModel.id)
     object:SetModel(cache:GetResource("Model", "Models/Box.mdl"))
-    local mtl = cache:GetResource("Material","Materials/DefaultWhite.xml"):Clone()
+    local mtl = translucent and cache:GetResource("Material","Materials/GreenTransparent.xml"):Clone() or cache:GetResource("Material","Materials/DefaultWhite.xml"):Clone()
     mtl:SetShaderParameter("MatDiffColor", Variant(color))
     object:SetMaterial(mtl)
     object:SetCastShadows(true)
@@ -18,8 +18,8 @@ local function create_effect(scene, name, filename, position, scale)
     emitter.scale = scale or math3d.Vector3.ONE
     local effect = emitter:CreateComponent(EffekseerEmitter.id)
     effect:SetEffect(filename)
-    effect:SetLooping(true)
-    return effect, emitter
+    effect:SetLooping(false)
+    return effect
 end
 
 function m:Init(scene, start_x)
@@ -31,7 +31,7 @@ function m:Init(scene, start_x)
     grid_linedesc.depth = true
     grid_linedesc.cache = true
     grid_linedesc.color = math3d.Color(1.0, 1.0, 0.0, 0.8)
-    grid_linedesc.depth_bias = 0.05
+    -- grid_linedesc.depth_bias = 0.05
     self.grid_linedesc = grid_linedesc
 
     local size = 1
@@ -39,7 +39,7 @@ function m:Init(scene, start_x)
     local round = 0.1
     local map_color = {math3d.Color(0.25, 0.25, 0.25, 1.0), math3d.Color(0.5, 0.5, 0.5, 1.0)}
     self.map = {}
-    self.ceil = {}
+    self.cubes = {}
     self.grids = {}
     for i = 1, 12 do
         local map_row = {}
@@ -67,26 +67,30 @@ function m:Init(scene, start_x)
                 node = create_cube(scene, position, map_color[ci])
             }
 
-            local node = create_cube(scene, math3d.Vector3(position.x, position.y + 3.0, position.z), math3d.Color(0.5, 0.0, 0.0, 1.0))
+            local node = create_cube(scene, math3d.Vector3(position.x, position.y, position.z), math3d.Color(0.5, 0.0, 0.0, 1.0), true)
             node:SetEnabled(false)
             ceil_row[#ceil_row + 1] = {
-                node = node
+                node = node,
+                color = math3d.Color(0.5, 0.0, 0.0, 1.0)
             }
         end
         self.map[#self.map + 1] = map_row
-        self.ceil[#self.ceil + 1] = ceil_row
+        self.cubes[#self.cubes + 1] = ceil_row
         self.grids[#self.grids + 1] = grid_row
     end
-    local fireball1, node1 = create_effect(scene, "fireball1", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 5, 0.5, -5.5 + 5), math3d.Vector3(0.25, 0.25, 0.25))
-    local fireball2, node2 = create_effect(scene, "fireball2", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 6, 0.5, -5.5 + 6), math3d.Vector3(0.25, 0.25, 0.25))
-    local shield = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 9, 0.0, -5.5 + 6), math3d.Vector3(0.15, 0.15, 0.15))
+    local fireball1 = create_effect(scene, "fireball1", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 5, 0.5, -5.5 + 5), math3d.Vector3(0.25, 0.25, 0.25))
+    local fireball2 = create_effect(scene, "fireball2", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 6, 0.5, -5.5 + 6), math3d.Vector3(0.25, 0.25, 0.25))
+    local shield1 = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 4, 0.0, -5.5 + 8), math3d.Vector3(0.15, 0.15, 0.15))
+    local shield2 = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 7, 0.0, -5.5 + 8), math3d.Vector3(0.15, 0.15, 0.15))
     self.effects = {
         fireball1 = fireball1,
         fireball2 = fireball2,
-        -- flame = create_effect(scene, "flame", "Effekseer/01_Pierre01/Flame.efk", math3d.Vector3(-5.5 + 5, 0.2, -5.5 + 5)),
-        shield = shield,
+        shield1 = shield1,
+        shield2 = shield2,
+        flame = create_effect(scene, "flame", "Effekseer/01_Pierre01/Flame.efk", math3d.Vector3(0, 0.5, 0))
     }
-    shield:SetSpeed(0.5)
+    shield1:SetSpeed(0.5)
+    shield2:SetSpeed(0.5)
     local action1 = ActionBuilder():MoveBy(2.5, math3d.Vector3(0, 0, -5)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
         :MoveBy(5.0, math3d.Vector3(0, 0, 11)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
         :MoveBy(5.0, math3d.Vector3(0, 0, -11)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
@@ -94,7 +98,7 @@ function m:Init(scene, start_x)
         :MoveBy(5.0, math3d.Vector3(0, 0, -11)):MoveBy(0.5, math3d.Vector3(-1, 0, 0))
         :MoveBy(5.0, math3d.Vector3(0, 0, 11)):JumpBy(math3d.Vector3(5, 0.0, -6))
         :RepeatForever():Build()
-    action_manager:AddAction(action1, node1)
+    action_manager:AddAction(action1, fireball1:GetNode())
     local action2 = ActionBuilder():MoveBy(2.5, math3d.Vector3(0, 0, 5)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
         :MoveBy(5.0, math3d.Vector3(0, 0, -11)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
         :MoveBy(5.0, math3d.Vector3(0, 0, 11)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
@@ -102,7 +106,7 @@ function m:Init(scene, start_x)
         :MoveBy(5.0, math3d.Vector3(0, 0, 11)):MoveBy(0.5, math3d.Vector3(1, 0, 0))
         :MoveBy(5.0, math3d.Vector3(0, 0, -11)):JumpBy(math3d.Vector3(-5, 0.0, 6))
         :RepeatForever():Build()
-    action_manager:AddAction(action2, node2)
+    action_manager:AddAction(action2, fireball2:GetNode())
     for _, e in pairs(self.effects) do
         e:Play()
     end
@@ -112,43 +116,55 @@ function m:ShowGrid(row, col, visible)
     self.grids[row][col].visible = visible
 end
 
-function m:Update()
-    if self.last_rise_coords then
-        local c = self.last_rise_coords[1]
-        local cn = self.map[c[1]][c[2]]
-        if action_manager:GetNumActions(cn.node) == 0 then
-            for _, coord in ipairs(self.last_rise_coords) do
-                local map_node = self.map[coord[1]][coord[2]]
-                local node = map_node.node
-                local pos = node.position
-                node.position = math3d.Vector3(pos.x, -0.5, pos.z)
-                local object = node:GetComponent(StaticModel.id)
-                local mtl = object:GetMaterial()
-                mtl:SetShaderParameter("MatDiffColor", Variant(map_node.color))
-                self:ShowGrid(coord[1], coord[2], false)
-            end
-            self.last_rise_coords = nil
-        end
+local function ResetShield(effect)
+    effect:Stop()
+    local node = effect:GetNode()
+    node.position = math3d.Vector3(-5.5 + math.random(0, 11), 0, -5.5 + math.random(0, 11))
+    effect:Play()
+end
+
+function m:ResetCubes(active_coords)
+    if not active_coords then
+        return
     end
-    
-    if self.last_fall_coords then
-        local c = self.last_fall_coords[1]
-        local cn = self.ceil[c[1]][c[2]]
-        if action_manager:GetNumActions(cn.node) == 0 then
-            for _, coord in ipairs(self.last_fall_coords) do
-                local ceil_node = self.ceil[coord[1]][coord[2]]
-                local pos = ceil_node.node.position
-                ceil_node.node.position = math3d.Vector3(pos.x, pos.y + 2, pos.z)
-                ceil_node.node:SetEnabled(false)
-                self:ShowGrid(coord[1], coord[2], false)
-            end
-            self.last_fall_coords = nil
+    local c = active_coords[1]
+    local cn = self.cubes[c[1]][c[2]]
+    if action_manager:GetNumActions(cn.node) == 0 then
+        for _, coord in ipairs(active_coords) do
+            local ceil_node = self.cubes[coord[1]][coord[2]]
+            ceil_node.node:SetEnabled(false)
+            self:ShowGrid(coord[1], coord[2], false)
         end
+        return true
     end
 end
 
-function m:StartEffect(name, coord)
+local flame_effect_time = 0
+local flame_effect_interval = 15
+local shield_effect_time = 0
+local shield_effect_interval = 4
+function m:Update(timeStep)
+    flame_effect_time = flame_effect_time + timeStep
+    if flame_effect_time >= flame_effect_interval then
+        flame_effect_time = 0
+        local effect = self.effects.flame
+        effect:Play()
+    end
 
+    shield_effect_time = shield_effect_time + timeStep
+    if shield_effect_time >= shield_effect_interval then
+        shield_effect_time = 0
+        ResetShield(self.effects.shield1)
+        ResetShield(self.effects.shield2)
+    end
+
+    if self:ResetCubes(self.last_rise_coords) then
+        self.last_rise_coords = nil
+    end
+
+    if self:ResetCubes(self.last_fall_coords) then
+        self.last_fall_coords = nil
+    end
 end
 
 function m:StartRise(coords)
@@ -156,13 +172,19 @@ function m:StartRise(coords)
         return
     end
     for _, coord in ipairs(coords) do
-        local map_node = self.map[coord[1]][coord[2]]
-        -- action_manager:CancelAllActionsFromTarget(map_node.node)
-        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0, 1, 0)):ExponentialIn():DelayTime(1.0):JumpBy(math3d.Vector3(0, -1, 0)):Build()
-        action_manager:AddAction(action, map_node.node)
-        local object = map_node.node:GetComponent(StaticModel.id)
+        local ceil_node = self.cubes[coord[1]][coord[2]]
+        local pos = ceil_node.node.position
+        ceil_node.node.position = math3d.Vector3(pos.x, -0.5, pos.z)
+        ceil_node.node:SetEnabled(true)
+        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0, 1, 0)):ExponentialIn():DelayTime(1.5):JumpBy(math3d.Vector3(0, -1, 0)):Build()
+        action_manager:AddAction(action, ceil_node.node)
+
+        local object = ceil_node.node:GetComponent(StaticModel.id)
         local mtl = object:GetMaterial()
         mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)))
+        local color_action = ActionBuilder():DelayTime(1.5):ShaderParameterFromTo(1.0, "MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)), Variant(math3d.Color(0.0, 0.0, 0.8, 0.0))):Build()
+        action_manager:AddAction(color_action, mtl)
+
         self:ShowGrid(coord[1], coord[2], true)
     end
     self.last_rise_coords = coords
@@ -173,11 +195,22 @@ function m:StartFall(coords)
         return
     end
     for _, coord in ipairs(coords) do
-        local ceil_node = self.ceil[coord[1]][coord[2]]
+        local ceil_node = self.cubes[coord[1]][coord[2]]
+        local pos = ceil_node.node.position
+        ceil_node.node.position = math3d.Vector3(pos.x, 2.5, pos.z)
         ceil_node.node:SetEnabled(true)
-        -- action_manager:CancelAllActionsFromTarget(ceil_node.node)
-        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0.0, -2.0, 0.0)):BackIn():DelayTime(1.0):Build()
+        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0.0, -2.0, 0.0)):BackIn():DelayTime(1.5):Build()
         action_manager:AddAction(action, ceil_node.node)
+
+        local object = ceil_node.node:GetComponent(StaticModel.id)
+        local mtl = object:GetMaterial()
+        mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)))
+        local color_action = ActionBuilder():ShaderParameterFromTo(0.5, "MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)), Variant(math3d.Color(0.5, 0.0, 0.0, 1.0)))
+            :DelayTime(1.5)
+            :ShaderParameterFromTo(0.5, "MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 1.0)), Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)))
+            :Build()
+        action_manager:AddAction(color_action, mtl)
+
         self:ShowGrid(coord[1], coord[2], true)
     end
     self.last_fall_coords = coords
