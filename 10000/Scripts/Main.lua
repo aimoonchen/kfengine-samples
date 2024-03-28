@@ -1,7 +1,7 @@
 local Item = require "Scripts/Item"
 local Map = require "Scripts/Map"
 local Utils = require "Scripts/Utils"
-
+local Timer = require "Scripts/Timer"
 local app = {
     running = false,
     chat_list = {},
@@ -112,6 +112,7 @@ end
 local rotation_speed = math3d.Vector3(20.0, 40.0, 60.0)
 function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
+    Timer:Update(timeStep)
     self.cube:Rotate(rotation_speed.x * timeStep, rotation_speed.y * timeStep, rotation_speed.z * timeStep)
     Item:Update(timeStep)
     Map:Update(timeStep)
@@ -466,6 +467,7 @@ function app:CreateScene(uiscene)
     self.outline_group = scene:CreateComponent(OutlineGroup.id)
     self.outline_group:SetColor(math3d.Color(0.0,0.7,0.0,1.0))
     self.mesh_line = scene:CreateComponent(MeshLine.id)
+    -- self.mesh_line:SetDepthBias(-0.0001)
     -- create ui
     FairyGUI.UIPackage.AddPackage("UI/Joystick")
     local view = FairyGUI.UIPackage.CreateObject("Joystick", "Main")

@@ -1,3 +1,4 @@
+local Timer = require "Scripts/Timer"
 local m = {}
 
 local function create_cube(scene, position, color, translucent)
@@ -22,6 +23,13 @@ local function create_effect(scene, name, filename, position, scale)
     return effect
 end
 
+local function reset_shield(effect)
+    effect:Stop()
+    local node = effect:GetNode()
+    node.position = math3d.Vector3(-5.5 + math.random(0, 11), 0, -5.5 + math.random(0, 11))
+    effect:Play()
+end
+
 function m:Init(scene, start_x)
     self.scene = scene
     self.mesh_line = scene:GetComponent(MeshLine.id)
@@ -31,8 +39,7 @@ function m:Init(scene, start_x)
     grid_linedesc.depth = true
     grid_linedesc.cache = true
     grid_linedesc.color = math3d.Color(1.0, 1.0, 0.0, 0.8)
-    -- grid_linedesc.depth_bias = 0.05
-    self.grid_linedesc = grid_linedesc
+    grid_linedesc.depth_bias = 0.001
 
     local size = 1
     local gap = 0.1
@@ -49,8 +56,8 @@ function m:Init(scene, start_x)
         for j = 1, 12 do
             position.x = -start_x + (j - 1)
             -- grid
-            local grid = self.mesh_line:AddGrid(1, 1, size, gap, round, self.grid_linedesc)
-            grid.model_mat = math3d.Matrix3x4(math3d.Vector3(position.x, 0.025, position.z), math3d.Quaternion.IDENTITY, 1.0)
+            local grid = self.mesh_line:AddGrid(1, 1, size, gap, round, grid_linedesc)
+            grid.model_mat = math3d.Matrix3x4(math3d.Vector3(position.x, 0.0, position.z), math3d.Quaternion.IDENTITY, 1.0)
             grid.visible = false
             grid_row[#grid_row + 1] = grid
 
@@ -80,8 +87,8 @@ function m:Init(scene, start_x)
     end
     local fireball1 = create_effect(scene, "fireball1", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 5, 0.5, -5.5 + 5), math3d.Vector3(0.25, 0.25, 0.25))
     local fireball2 = create_effect(scene, "fireball2", "Effekseer/01_Suzuki01/001_magma_effect/aura.efk", math3d.Vector3(-5.5 + 6, 0.5, -5.5 + 6), math3d.Vector3(0.25, 0.25, 0.25))
-    local shield1 = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 4, 0.0, -5.5 + 8), math3d.Vector3(0.15, 0.15, 0.15))
-    local shield2 = create_effect(scene, "shield", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 7, 0.0, -5.5 + 8), math3d.Vector3(0.15, 0.15, 0.15))
+    local shield1 = create_effect(scene, "shield1", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 4, 0.0, -5.5 + 8), math3d.Vector3(0.15, 0.15, 0.15))
+    local shield2 = create_effect(scene, "shield2", "Effekseer/00_Version16/Barrior01.efk", math3d.Vector3(-5.5 + 7, 0.0, -5.5 + 8), math3d.Vector3(0.15, 0.15, 0.15))
     self.effects = {
         fireball1 = fireball1,
         fireball2 = fireball2,
@@ -110,17 +117,15 @@ function m:Init(scene, start_x)
     for _, e in pairs(self.effects) do
         e:Play()
     end
+    Timer:AddTimer(4, function ()
+        reset_shield(self.effects.shield1)
+        reset_shield(self.effects.shield2)
+    end, 0, 4)
+    Timer:AddTimer(15, function () self.effects.flame:Play() end, 0, 15)
 end
 
 function m:ShowGrid(row, col, visible)
     self.grids[row][col].visible = visible
-end
-
-local function ResetShield(effect)
-    effect:Stop()
-    local node = effect:GetNode()
-    node.position = math3d.Vector3(-5.5 + math.random(0, 11), 0, -5.5 + math.random(0, 11))
-    effect:Play()
 end
 
 function m:ResetCubes(active_coords)
@@ -139,25 +144,7 @@ function m:ResetCubes(active_coords)
     end
 end
 
-local flame_effect_time = 0
-local flame_effect_interval = 15
-local shield_effect_time = 0
-local shield_effect_interval = 4
 function m:Update(timeStep)
-    flame_effect_time = flame_effect_time + timeStep
-    if flame_effect_time >= flame_effect_interval then
-        flame_effect_time = 0
-        local effect = self.effects.flame
-        effect:Play()
-    end
-
-    shield_effect_time = shield_effect_time + timeStep
-    if shield_effect_time >= shield_effect_interval then
-        shield_effect_time = 0
-        ResetShield(self.effects.shield1)
-        ResetShield(self.effects.shield2)
-    end
-
     if self:ResetCubes(self.last_rise_coords) then
         self.last_rise_coords = nil
     end
