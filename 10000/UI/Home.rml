@@ -1,0 +1,27 @@
+<rml>
+    <head>
+        <style>
+            body {
+				font-family: FZZhunYuan-M02S;
+                font-weight: normal;
+				font-style: normal;
+				font-size: 24dp;
+                width: 100%;
+            }
+            .title {
+                display: block;
+                font-weight: bold;
+                font-size: 48dp;
+                text-align: center;
+                color: #9777d9;
+            }
+        </style>
+        <script src="Home.lua" />
+    </head>
+    <body onpostload="Home.OnPostLoad(document)" onunload="Home.OnUnload(document)" data-model="HomeData">
+        <div class="title">{{title}}</div>
+        <div style="display: block; pointer-events: auto; border: 2px rgba(0,255,50,160); border-radius: 15vh; width: 15vh; height: 15vh; background-color: rgba(150,50,0,255);" onclick="Home.OnAttack(event, element)">
+            <div style="display: block; text-align: center; font-size: 5vh; line-height: 15vh;">Fire</div>
+        </div>
+    </body>
+</rml>

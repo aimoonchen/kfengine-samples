@@ -445,6 +445,38 @@ local function CreateNavi(scene)
     crowdManager:SetObstacleAvoidanceParams(0, params)
 end
 
+function app:CreateSound()
+    local bankname = "Sounds/Master.bank"
+    local ret = Audio.LoadBank(bankname)
+    if not ret then
+        print("LoadBank Faied. :", bankname)
+    end
+    bankname = "Sounds/Master.strings.bank"
+    ret = Audio.LoadBank(bankname)
+    if not ret then
+        print("LoadBank Faied. :", bankname)
+    end
+    bankname = "Sounds/UI.bank"
+    ret = Audio.LoadBank(bankname)
+    if not ret then
+        print("LoadBank Faied. :", bankname)
+    end
+    self.sound_attack = Audio.CreateEvent("event:/Scene/attack")
+    -- self.sound_click5 = Audio.CreateEvent("event:/UI/click5")
+    -- self.sound_mouseclick1 = Audio.CreateEvent("event:/UI/mouseclick1")
+    -- self.sound_attack = Audio.CreateEvent("event:/Scene/attack")
+end
+
+function app:CreateRMLUI()
+    rmlui.LoadFont("Fonts/FZY3JW.TTF", false)
+    local uicomp = self.scene:CreateComponent(RmlUIComponent.id)
+    -- uicomp:SetResource("UI/Home.rml", app)
+    -- uicomp:SetResource("UI/flat-buttons.rml", app)
+    uicomp:SetResource("UI/flat-buttons-2.rml", app)
+    -- uicomp:SetResource("UI/VisualTests/flex_01.rml", app)
+    self.rmlui_comp = uicomp
+end
+
 function app:CreateScene(uiscene)
     self.uiscene = uiscene
     self.scene = Scene()
@@ -531,17 +563,8 @@ function app:CreateScene(uiscene)
     self.attack_effect = attackEffect
 
     -- create sound
-    local bankname = "Sounds/Master.bank"
-    local ret = Audio.LoadBank(bankname)
-    if not ret then
-        print("LoadBank Faied. :", bankname)
-    end
-    local bankname = "Sounds/Master.strings.bank"
-    ret = Audio.LoadBank(bankname)
-    if not ret then
-        print("LoadBank Faied. :", bankname)
-    end
-    self.sound_attack = Audio.CreateEvent("event:/Scene/attack")
+    self:CreateSound()
+    self:CreateRMLUI()
     --
     self.fadetime = 0.3
     self.action = false
@@ -549,6 +572,7 @@ function app:CreateScene(uiscene)
 
     Item:Init(scene)
     self.cube = scene:GetChild("Box")
+    
 end
 
 function app:Load(viewport, uiroot)

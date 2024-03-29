@@ -1,0 +1,17 @@
+<rml>
+    <head>
+        <link type="text/rcss" href="./flat-buttons-2.rcss"/>
+        <style>
+        </style>
+    </head>
+    <body>
+        <div id="buttons">
+            <a class="btn blue">Blue Button</a>
+            <a class="btn green">Green Button</a>
+            <a class="btn red">Red Button</a>
+            <a class="btn purple">Purple Button</a>
+            <a class="btn orange">Orange Button</a>
+            <a class="btn yellow">Yellow Button</a>
+          </div>
+    </body>
+</rml>

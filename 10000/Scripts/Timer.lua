@@ -13,7 +13,7 @@ function m:AddTimer(interval, func, repeat_count, delay, paused)
         paused = paused,
         delay = delay
     }
-    if t.delay > 0 then
+    if t.delay and t.delay > 0 then
         t.paused = true
     elseif not t.paused then
         --fist time
