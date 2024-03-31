@@ -8,20 +8,76 @@
 				font-size: 24dp;
                 width: 100%;
             }
-            .title {
-                display: block;
-                font-weight: bold;
-                font-size: 48dp;
+            .progress-bar {
+                margin-left: 30%;
+                margin-right: 30%;
+                width: 40%;
+                height: 7vh;
+                background-color: #f3f3f3;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+            }  
+            .progress-bar-inner {
+                height: 100%;
+                background-color: #4CAF50;
+            }  
+            .progress-text {
+                width: 100%;
+                font-weight: normal;
+                font-size: 64dp;
                 text-align: center;
-                color: #9777d9;
+                color: #333;
+            }
+            .mybutton {
+                width: 16vh;
+                height: 6vh;
+                background-color: #4CAF50;
+                /* border: none; */
+                color: white;
+                /* padding: 1vh 1vh; */
+                text-align: center;
+                /* text-decoration: none; */
+                display: inline-block;
+                font-size: 5vh;
+                margin: 1vh 1vh;
+                /* cursor: pointer; */
+                transition: background-color 0.5s;
+            }
+            @keyframes grow {
+                0%   {transform: scale(1);}
+                50%  {transform: scale(1.1);}
+                100% {transform: scale(1);}
+            }
+            .mybutton:active {
+                background-color: #3e8e41;
+                animation: 0.5s cubic-in-out grow;
             }
         </style>
         <script src="Home.lua" />
     </head>
     <body onpostload="Home.OnPostLoad(document)" onunload="Home.OnUnload(document)" data-model="HomeData">
-        <div class="title">{{title}}</div>
-        <div style="display: block; pointer-events: auto; border: 2px rgba(0,255,50,160); border-radius: 15vh; width: 15vh; height: 15vh; background-color: rgba(150,50,0,255);" onclick="Home.OnAttack(event, element)">
-            <div style="display: block; text-align: center; font-size: 5vh; line-height: 15vh;">Fire</div>
+        <div class="progress-bar">  
+            <div class="progress-bar-inner" data-style-width="time_percent + '%'"></div>  
+            <div class="progress-text" style="position: absolute; left: 0;">{{title}}</div>  
+        </div>
+        
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
+            <div class="mybutton" id="Flame" onclick="Home.OnSpell(event, element)">Flame</div>
+            <div class="mybutton" id="Rise" onclick="Home.OnSpell(event, element)">Rise</div>
+            <div class="mybutton" id="Fall" onclick="Home.OnSpell(event, element)">Fall</div>
+            <!--
+            <div style="border: 4px rgba(0,255,50,160); border-radius: 15vh; width: 15vh; height: 15vh; background-color: rgba(150,50,0,255);" onclick="Home.OnAttack(event, element)">
+                <div style="display: block; text-align: center; font-size: 5vh; line-height: 15vh;">Flame</div>
+            </div>
+            <div style="border: 4px rgba(0,255,50,160); border-radius: 15vh; width: 15vh; height: 15vh; background-color: rgba(150,50,0,255);" onclick="Home.OnAttack(event, element)">
+                <div style="display: block; text-align: center; font-size: 5vh; line-height: 15vh;">Rise</div>
+            </div>
+            <div style="border: 4px rgba(0,255,50,160); border-radius: 15vh; width: 15vh; height: 15vh; background-color: rgba(150,50,0,255);" onclick="Home.OnAttack(event, element)">
+                <div style="display: block; text-align: center; font-size: 5vh; line-height: 15vh;">Fall</div>
+            </div>
+            -->
         </div>
     </body>
 </rml>

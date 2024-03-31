@@ -1,4 +1,4 @@
-local Timer = require "Scripts/Timer"
+local Timer = require "Timer"
 local m = {}
 
 local function create_cube(scene, position, color, translucent)
@@ -121,7 +121,7 @@ function m:Init(scene, start_x)
         reset_shield(self.effects.shield1)
         reset_shield(self.effects.shield2)
     end, 0, 4)
-    Timer:AddTimer(15, function () self.effects.flame:Play() end, 0, 15)
+    -- Timer:AddTimer(15, function () self.effects.flame:Play() end, 0, 15)
 end
 
 function m:ShowGrid(row, col, visible)
@@ -152,6 +152,10 @@ function m:Update(timeStep)
     if self:ResetCubes(self.last_fall_coords) then
         self.last_fall_coords = nil
     end
+end
+
+function m:StartFlame()
+    self.effects.flame:Play()
 end
 
 function m:StartRise(coords)

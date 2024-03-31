@@ -1,7 +1,8 @@
-local Item = require "Scripts/Item"
-local Map = require "Scripts/Map"
-local Utils = require "Scripts/Utils"
-local Timer = require "Scripts/Timer"
+local Item = require "Item"
+local Map = require "Map"
+local Utils = require "Utils"
+local Timer = require "Timer"
+local NPC = require "NPC"
 local app = {
     running = false,
     chat_list = {},
@@ -48,32 +49,13 @@ local function SpawnCharacter(parent, name, pos, init_anim)
     app.actor_name = uiName
 end
 
-local MagicType = 0
 local function onAttackBtn(eventContext)
     app.action = true
     if app.attack then
         return
     end
-    local wp = app.agent:GetNode().world_position
-    Item:Start(15, math.floor(wp.z + 6.0) + 1, math.floor(wp.x + 6.0) + 1)
-    local rows = Utils.MultiRandom(1, 12, 8)
-    local cols = Utils.MultiRandom(1, 12, 8)
-    if (MagicType % 2) == 0 then
-        Map:StartRise({
-            {rows[1], cols[1]},
-            {rows[2], cols[2]},
-            {rows[3], cols[3]},
-            {rows[4], cols[4]}
-        })
-    else
-        Map:StartFall({
-            {rows[5], cols[5]},
-            {rows[6], cols[6]},
-            {rows[7], cols[7]},
-            {rows[8], cols[8]}
-        })
-    end
-    MagicType = MagicType + 1
+    local row, col = GetCharacterCoord()
+    Item:Start(15, row, col)
 
     app.attack = true
     app.anim_ctrl:Stop(idle_anim, app.fadetime)
@@ -112,8 +94,9 @@ end
 local rotation_speed = math3d.Vector3(20.0, 40.0, 60.0)
 function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
-    Timer:Update(timeStep)
     self.cube:Rotate(rotation_speed.x * timeStep, rotation_speed.y * timeStep, rotation_speed.z * timeStep)
+    Timer:Update(timeStep)
+    NPC:Update()
     Item:Update(timeStep)
     Map:Update(timeStep)
     for _, item in ipairs(self.chat_list) do
@@ -237,32 +220,6 @@ end
 function app:UpdateCamera(timeStep)
 end
 
--- Mover script object class
-Mover = ScriptObject()
-
-function Mover:Start()
-    self.moveSpeed = 0.0
-    self.rotationSpeed = 0.0
-    self.bounds = math3d.BoundingBox()
-end
-
-function Mover:SetParameters(moveSpeed, rotationSpeed, bounds)
-    self.moveSpeed = moveSpeed
-    self.rotationSpeed = rotationSpeed
-    self.bounds = bounds
-end
-
-function Mover:Update(timeStep)
-    local node = self.node
-    node:Translate(math3d.Vector3(0.0, 0.0, 1.0) * self.moveSpeed * timeStep)
-
-    -- If in risk of going outside the plane, rotate the model right
-    local pos = node.position
-    local bounds = self.bounds
-    if pos.x < bounds.min.x or pos.x > bounds.max.x or pos.z < bounds.min.z or pos.z > bounds.max.z then
-        node:Yaw(self.rotationSpeed * timeStep)
-    end
-end
 local names0 = {
     "Rat",
     "Ox",
@@ -295,6 +252,32 @@ local names1 = {"鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗
 local names2 = {"子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"}
 local names3 = {"甲","乙","丙","丁","戊","己","庚","辛","壬","癸"}
 local names4 = {"水瓶","双鱼","白羊","金牛","双子","巨蟹","狮子","处女","天秤","天蝎","射手","摩羯"}
+function app.OnUImessage(event)
+    local rows = Utils.MultiRandom(1, 12, 8)
+    local cols = Utils.MultiRandom(1, 12, 8)
+    if event.action == "Rise" then
+        Map:StartRise({
+            {rows[1], cols[1]},
+            {rows[2], cols[2]},
+            {rows[3], cols[3]},
+            {rows[4], cols[4]}
+        })
+    elseif event.action == "Fall" then
+        Map:StartFall({
+            {rows[5], cols[5]},
+            {rows[6], cols[6]},
+            {rows[7], cols[7]},
+            {rows[8], cols[8]}
+        })
+    elseif event.action == "Flame" then
+        Map:StartFlame()
+    end
+end
+
+function app.OnBossFight(index)
+    NPC:OnBossFight(index)
+end
+
 local function CreateMap(scene, size, space)
     local rs = size + space
     local start_x = rs * 0.5 + rs * (#names1 // 2 - 1)
@@ -307,19 +290,11 @@ local function CreateMap(scene, size, space)
         local object = node:CreateComponent(StaticModel.id)
         object:SetModel(model)
         local new_mtl = mtl:Clone()
-        new_mtl:SetShaderParameter("MatDiffColor", Variant(colors[i]))
+        -- new_mtl:SetShaderParameter("MatDiffColor", Variant(colors[i]))
         object:SetMaterial(new_mtl)
         object:SetCastShadows(true)
 
-        local text_node = node:CreateChild("Text3D")
-        local text_object = text_node:CreateComponent(Text3D.id)
-        text_object:SetFont("Fonts/FZY3JW.TTF")
-        text_object:SetText(names2[i] .. name)
-        text_object:SetColor(math3d.Color(0.0, 0.0, 1.0))
-        text_object:SetOpacity(0.8)
-        text_object:SetFontSize(32)
-        local bbsize = text_object:GetBoundingBox():Size()
-        text_node.position = math3d.Vector3(-0.5 * bbsize.x, 1.0, 0.0)
+        NPC:CreateNpc(names0[i], math3d.Vector3(location.x, 1, location.z), math3d.Vector3(0.0015, 0.0015, 0.0015), "rifle_idle", colors[i])
         location.x = location.x + rs
     end
     local node = scene:CreateChild("LeftWall")
@@ -470,9 +445,11 @@ end
 function app:CreateRMLUI()
     rmlui.LoadFont("Fonts/FZY3JW.TTF", false)
     local uicomp = self.scene:CreateComponent(RmlUIComponent.id)
-    -- uicomp:SetResource("UI/Home.rml", app)
+    uicomp:SetResource("UI/Home.rml", app)
+    -- uicomp:SetResource("UI/radial-progress-bar.rml", app)
     -- uicomp:SetResource("UI/flat-buttons.rml", app)
-    uicomp:SetResource("UI/flat-buttons-2.rml", app)
+    -- uicomp:SetResource("UI/flat-buttons-2.rml", app)
+    -- uicomp:SetResource("UI/checkbox-radio-droplist.rml", app)
     -- uicomp:SetResource("UI/VisualTests/flex_01.rml", app)
     self.rmlui_comp = uicomp
 end
@@ -514,9 +491,18 @@ function app:CreateScene(uiscene)
     self.ui_view     = view
     self.input       = view:GetChild("input")
 
+    local astar = AStar()
+    astar:SetWorldSize(12, 12)
+    -- Manhattan,Euclidean,Octagonal
+    astar:SetHeuristic(AStar.Euclidean)
+    astar:SetDiagonalMovement(false)
+    -- local path = astar:FindPath(0, 0, 20, 20)
+    -- for i=1, #path, 2 do
+    --     print(path[i], path[i + 1])
+    -- end
+    self.astar = astar
+
     --create world
-    CreateWorld(scene)
-    CreateNavi(scene)
     SpawnCharacter(scene, "Actor", math3d.Vector3(0, 0, -2))
     local agent = scene:GetComponent(CrowdAgent.id, true)
     agent:SetUpdateNodePosition(false)
@@ -525,6 +511,9 @@ function app:CreateScene(uiscene)
     self.agent      = agent
     self.anim_ctrl  = anim_ctrl
 
+    NPC:Init(scene, self.agent:GetNode(), self.astar)
+    CreateWorld(scene)
+    CreateNavi(scene)
     -- create camera
     -- local cryNode = scene:GetChild("Actor", true):CreateChild("Camera Yaw")
     -- cryNode.rotation = math3d.Quaternion(0.0, self.yaw, 0.0)
@@ -572,7 +561,6 @@ function app:CreateScene(uiscene)
 
     Item:Init(scene)
     self.cube = scene:GetChild("Box")
-    
 end
 
 function app:Load(viewport, uiroot)

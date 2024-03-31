@@ -1,4 +1,4 @@
-local Map = require "Scripts/Map"
+local Map = require "Map"
 local m = {
     speed = 4
 }
