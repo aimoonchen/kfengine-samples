@@ -98,15 +98,19 @@ end
 function m:Update(timeStep)
     for index = 1, #self.npc do
         local npc = self.npc[index]
+        if not npc.target then
+            goto continue
+        end
         local row, col = PositionToCoord(npc.target.world_position)
-        if #npc.target_coord == 0 or npc.target_coord[1] ~= row or npc.target_coord[2] ~= col then
+        if npc.target_coord[1] ~= row or npc.target_coord[2] ~= col then
             npc.target_coord[1] = row
             npc.target_coord[2] = col
             self:UpdatePath(index)
             if npc.action and action_manager:GetNumActions(npc.node) ~= 0 then
-                action_manager:CancelAction(npc.action)
                 local coord = npc.path[#npc.path]
-                if npc.next_coord[1] ~= coord[1] or npc.next_coord[1] ~= coord[1] then
+                if npc.next_coord[1] ~= coord[1] or npc.next_coord[2] ~= coord[2] then
+                    action_manager:CancelAction(npc.action)
+                    npc.action = nil
                     local px, pz = CoordToPosition(npc.coord[1], npc.coord[2])
                     local pos = npc.node.position
                     local dx, dz = px - pos.x, pz - pos.z
@@ -114,7 +118,10 @@ function m:Update(timeStep)
                     local abs_dx = math.abs(dx)
                     local abs_dz = math.abs(dz)
                     if abs_dx > 0.1 or abs_dz > 0.1 then
+                        print("--------AddAction--------1", dx, dz)
                         npc.action = action_manager:AddAction(ActionBuilder():MoveBy((abs_dx > 0 and abs_dx or abs_dz), math3d.Vector3(dx, 0, dz)):Build(), npc.node)
+                    else
+                        print("--------skip--------")
                     end
                 else
                     table.remove(npc.path)
@@ -135,6 +142,7 @@ function m:Update(timeStep)
                         npc.idle = false
                         PlayAnim(npc.node, "rifle_run")
                     end
+                    print("--------AddAction--------2", dx, dz)
                     npc.action = action_manager:AddAction(ActionBuilder():MoveBy(1, math3d.Vector3(dx, 0, dz)):Build(), npc.node)
                 else
                     npc.idle = true
@@ -142,6 +150,7 @@ function m:Update(timeStep)
                 end
             end
         end
+        ::continue::
     end
 end
 
