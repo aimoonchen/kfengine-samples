@@ -274,8 +274,8 @@ function app.OnUImessage(event)
     end
 end
 
-function app.OnBossFight(index)
-    NPC:OnBossFight(index)
+function app.StartChase(index)
+    NPC:StartChaseTarget(index, app.agent:GetNode())
 end
 
 local function CreateMap(scene, size, space)
@@ -511,7 +511,7 @@ function app:CreateScene(uiscene)
     self.agent      = agent
     self.anim_ctrl  = anim_ctrl
 
-    NPC:Init(scene, self.agent:GetNode(), self.astar)
+    NPC:Init(scene, self.astar)
     CreateWorld(scene)
     CreateNavi(scene)
     -- create camera

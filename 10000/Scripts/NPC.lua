@@ -1,32 +1,36 @@
 local Utils = require "Utils"
-
+local animation = {
+    idle            = cache:GetResource("Animation", "Models/Blockman/Animations/Idle.ani"),
+    rifle_idle      = cache:GetResource("Animation", "Models/Blockman/Animations/RifleIdle.ani"),
+    rifle_run       = cache:GetResource("Animation", "Models/Blockman/Animations/RifleRun.ani"),
+    walk            = cache:GetResource("Animation", "Models/Blockman/Animations/Walking.ani"),
+    walk_with_rifle = cache:GetResource("Animation", "Models/Blockman/Animations/WalkWithRifle.ani"),
+    run             = cache:GetResource("Animation", "Models/Blockman/Animations/StandardRun.ani"),
+    laughing        = cache:GetResource("Animation", "Models/Blockman/Animations/Laughing.ani"),
+    talking         = cache:GetResource("Animation", "Models/Blockman/Animations/Talking.ani"),
+    talking1        = cache:GetResource("Animation", "Models/Blockman/Animations/Talking1.ani"),
+}
 local m = {
-    anim = {
-        idle            = cache:GetResource("Animation", "Models/Blockman/Animations/Idle.ani"),
-        rifle_idle      = cache:GetResource("Animation", "Models/Blockman/Animations/RifleIdle.ani"),
-        rifle_run       = cache:GetResource("Animation", "Models/Blockman/Animations/RifleRun.ani"),
-        walk            = cache:GetResource("Animation", "Models/Blockman/Animations/Walking.ani"),
-        walk_with_rifle = cache:GetResource("Animation", "Models/Blockman/Animations/WalkWithRifle.ani"),
-        run             = cache:GetResource("Animation", "Models/Blockman/Animations/StandardRun.ani"),
-        laughing        = cache:GetResource("Animation", "Models/Blockman/Animations/Laughing.ani"),
-        talking         = cache:GetResource("Animation", "Models/Blockman/Animations/Talking.ani"),
-        talking1        = cache:GetResource("Animation", "Models/Blockman/Animations/Talking1.ani"),
-    },
     npc = {}
 }
 
 
-local function GetCoord(node)
-    local wp = node.world_position
+local function PositionToCoord(wp)
     return math.floor(wp.z + 6.0) + 1, math.floor(wp.x + 6.0) + 1
 end
 
-function m:Init(scene, character, astar)
+local function CoordToPosition(row, col)
+    return -5.5 + (col - 1), -5.5 + (row - 1)
+end
+
+local function PlayAnim(node, anim_name)
+    local animController = node:GetComponent(AnimationController.id)
+    animController:PlayNewExclusive(AnimationParameters(animation[anim_name]):Looped())
+end
+
+function m:Init(scene, astar)
     self.scene = scene
-    self.character = character
     self.astar = astar
-    local row, col = GetCoord(character)
-    self.char_coord = {row, col}
 end
 
 local function PutMachineGun(node)
@@ -41,9 +45,9 @@ end
 
 local names1 = {"鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"}
 local names2 = {"子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"}
-function m:CreateNpc(name, pos, scale, anim_anim, color)
+function m:CreateNpc(name, pos, scale, anim_name, color)
     local node = self.scene:CreateChild(name)
-    self.npc[#self.npc + 1] = {node = node, coord = {}, target_coord = {}, path = {}, finish = false}
+    self.npc[#self.npc + 1] = {name = name, node = node, coord = {}, target_coord = {}, path = {}}
     node:AddTag("outline")
     node.position = pos
     node.scale = scale
@@ -56,6 +60,8 @@ function m:CreateNpc(name, pos, scale, anim_anim, color)
     end
     modelObject:SetMaterial(mtl)
     modelObject:SetCastShadows(true)
+
+    node:CreateComponent(AnimationController.id)
 
     local text_node = node:CreateChild("Text3D")
     local invScale = 1 / scale.x
@@ -70,72 +76,89 @@ function m:CreateNpc(name, pos, scale, anim_anim, color)
     text_node.position = math3d.Vector3(-0.5 * bbsize.x * invScale, 1.2 * invScale, 0.0)
 
     PutMachineGun(node)
-    local animController = node:CreateComponent(AnimationController.id)
-    animController:PlayNewExclusive(AnimationParameters(self.anim[anim_anim]):Looped())
-
+    PlayAnim(node, anim_name)
     return node
 end
 
 function m:UpdatePath(index)
     local npc = self.npc[index]
-    local path_list = self.astar:FindPath(npc.coord[1] - 1, npc.coord[2] - 1, self.char_coord[1] - 1, self.char_coord[2] - 1)
-    local path = {}
-    print(npc.coord[1] - 1, npc.coord[2] - 1)
-    print(self.char_coord[1] - 1, self.char_coord[2] - 1)
-    for i=3, #path_list, 2 do
-        path[#path + 1] = {path_list[i] + 1, path_list[i + 1] + 1}
+    if #npc.coord == 0 then
+        return
     end
-    npc.path = path
-end
-
-local function GetPositionByCoord(row, col)
-    return -5.5 + (col - 1), -5.5 + (row - 1)
+    local path_list = self.astar:FindPath(npc.coord[1] - 1, npc.coord[2] - 1, npc.target_coord[1] - 1, npc.target_coord[2] - 1)
+    if #path_list > 4 then
+        local path = {}
+        for i=1, #path_list - 2, 2 do
+            path[#path + 1] = {path_list[i] + 1, path_list[i + 1] + 1}
+        end
+        npc.path = path
+    end
 end
 
 function m:Update(timeStep)
-    local row, col = GetCoord(self.character)
-    local coord_dirty = false
-    if self.char_coord[1] ~= row or self.char_coord[2] ~= col then
-        self.char_coord[1] = row
-        self.char_coord[2] = col
-        coord_dirty = true
-    end
-    if coord_dirty then
-        for index = 1, #self.npc do
-            self:UpdatePath(index)
-        end
-    end
     for index = 1, #self.npc do
         local npc = self.npc[index]
-        if not npc.finish and action_manager:GetNumActions(npc.node) == 0 then
+        local row, col = PositionToCoord(npc.target.world_position)
+        if #npc.target_coord == 0 or npc.target_coord[1] ~= row or npc.target_coord[2] ~= col then
+            npc.target_coord[1] = row
+            npc.target_coord[2] = col
+            self:UpdatePath(index)
+            if npc.action and action_manager:GetNumActions(npc.node) ~= 0 then
+                action_manager:CancelAction(npc.action)
+                local coord = npc.path[#npc.path]
+                if npc.next_coord[1] ~= coord[1] or npc.next_coord[1] ~= coord[1] then
+                    local px, pz = CoordToPosition(npc.coord[1], npc.coord[2])
+                    local pos = npc.node.position
+                    local dx, dz = px - pos.x, pz - pos.z
+                    npc.node.direction = math3d.Vector3(-dx, 0, -dz)
+                    local abs_dx = math.abs(dx)
+                    local abs_dz = math.abs(dz)
+                    if abs_dx > 0.1 or abs_dz > 0.1 then
+                        npc.action = action_manager:AddAction(ActionBuilder():MoveBy((abs_dx > 0 and abs_dx or abs_dz), math3d.Vector3(dx, 0, dz)):Build(), npc.node)
+                    end
+                else
+                    table.remove(npc.path)
+                end
+            end
+        end
+        if #npc.path > 0 and action_manager:GetNumActions(npc.node) == 0 then
             local target = table.remove(npc.path)
             if target then
-                npc.target_coord = target
+                npc.coord[1], npc.coord[2] = PositionToCoord(npc.node.world_position)
                 local pos = npc.node.position
-                local px, pz = GetPositionByCoord(target[1], target[2])
-                action_manager:AddAction(ActionBuilder():MoveBy(1, math3d.Vector3(px - pos.x, 0, pz - pos.z)):Build(), npc.node)
-            end
-            if #npc.path == 0 then
-                npc.finish = true
+                local px, pz = CoordToPosition(target[1], target[2])
+                local dx, dz = px - pos.x, pz - pos.z
+                npc.node.direction = math3d.Vector3(-dx, 0, -dz)
+                if #npc.path > 0 then
+                    npc.next_coord = target
+                    if npc.idle then
+                        npc.idle = false
+                        PlayAnim(npc.node, "rifle_run")
+                    end
+                    npc.action = action_manager:AddAction(ActionBuilder():MoveBy(1, math3d.Vector3(dx, 0, dz)):Build(), npc.node)
+                else
+                    npc.idle = true
+                    PlayAnim(npc.node, "rifle_idle")
+                end
             end
         end
     end
 end
 
-local fight_count = 0
 local unique_pos = {}
-function m:OnBossFight(index)
-    if fight_count >= 12 then
+function m:StartChaseTarget(index, target)
+    local npc = self.npc[index]
+    if npc.target then
         return
     end
+
     if not unique_pos.rows then
         unique_pos.rows = Utils.MultiRandom(1, 12, 12)
         unique_pos.cols = Utils.MultiRandom(1, 12, 12)
     end
-    local npc = self.npc[index]
+
+    npc.target = target
     npc.coord = {unique_pos.rows[index], unique_pos.cols[index]}
-    self.char_coord[1], self.char_coord[2] = GetCoord(self.character)
-    self:UpdatePath(index)
 
     local current_pos = npc.node.position
     local born_pos = math3d.Vector3(-5.5 + unique_pos.cols[index] - 1, 0, -5.5 + unique_pos.rows[index] - 1)
@@ -148,10 +171,7 @@ function m:OnBossFight(index)
         Build(),
         npc.node
     )
-    local animController = npc.node:CreateComponent(AnimationController.id)
-    animController:PlayNewExclusive(AnimationParameters(self.anim["rifle_run"]):Looped())
-
-    fight_count = fight_count + 1
+    PlayAnim(npc.node, "rifle_run")
 end
 
 return m
