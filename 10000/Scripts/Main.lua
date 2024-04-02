@@ -1,3 +1,5 @@
+-- require("LuaPanda").start("127.0.0.1",8818);
+
 local Item = require "Item"
 local Map = require "Map"
 local Utils = require "Utils"

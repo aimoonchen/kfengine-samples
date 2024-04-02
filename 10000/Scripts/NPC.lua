@@ -118,10 +118,7 @@ function m:Update(timeStep)
                     local abs_dx = math.abs(dx)
                     local abs_dz = math.abs(dz)
                     if abs_dx > 0.1 or abs_dz > 0.1 then
-                        print("--------AddAction--------1", dx, dz)
                         npc.action = action_manager:AddAction(ActionBuilder():MoveBy((abs_dx > 0 and abs_dx or abs_dz), math3d.Vector3(dx, 0, dz)):Build(), npc.node)
-                    else
-                        print("--------skip--------")
                     end
                 else
                     table.remove(npc.path)
@@ -142,7 +139,6 @@ function m:Update(timeStep)
                         npc.idle = false
                         PlayAnim(npc.node, "rifle_run")
                     end
-                    print("--------AddAction--------2", dx, dz)
                     npc.action = action_manager:AddAction(ActionBuilder():MoveBy(1, math3d.Vector3(dx, 0, dz)):Build(), npc.node)
                 else
                     npc.idle = true

@@ -25,7 +25,7 @@ function Home.OnPostLoad(document)
     Home.uicontext = rmlui.uicontext[Home.rmlui_omponent:GetResource()]
     Timer:AddTimer(5, function ()
         Home.datamodel.title = time_name[time_index]
-        Home.uicontext.OnBossFight(time_index)
+        Home.uicontext.StartChase(time_index)
         time_index = time_index < #time_name and time_index + 1 or 1
         time = 0
     end)
