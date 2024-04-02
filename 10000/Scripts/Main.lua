@@ -56,8 +56,8 @@ local function onAttackBtn(eventContext)
     if app.attack then
         return
     end
-    local row, col = GetCharacterCoord()
-    Item:Start(15, row, col)
+    local wp = app.agent:GetNode().world_position
+    Item:Start(15, math.floor(wp.z + 6.0) + 1, math.floor(wp.x + 6.0) + 1)
 
     app.attack = true
     app.anim_ctrl:Stop(idle_anim, app.fadetime)
@@ -273,6 +273,8 @@ function app.OnUImessage(event)
         })
     elseif event.action == "Flame" then
         Map:StartFlame()
+    elseif event.action == "Reset" then
+        NPC:ResetChase()
     end
 end
 

@@ -47,7 +47,7 @@ local names1 = {"鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗
 local names2 = {"子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"}
 function m:CreateNpc(name, pos, scale, anim_name, color)
     local node = self.scene:CreateChild(name)
-    self.npc[#self.npc + 1] = {name = name, node = node, coord = {}, target_coord = {}, path = {}}
+    self.npc[#self.npc + 1] = {born_pos = pos, name = name, node = node, coord = {}, target_coord = {}, path = {}}
     node:AddTag("outline")
     node.position = pos
     node.scale = scale
@@ -177,6 +177,21 @@ function m:StartChaseTarget(index, target)
         npc.node
     )
     PlayAnim(npc.node, "rifle_run")
+end
+
+function m:ResetChase()
+    for _, npc in ipairs(self.npc) do
+        action_manager:CompleteAllActionsOnTarget(npc.node)
+        npc.action = nil
+        npc.target = nil
+        npc.node.position = npc.born_pos
+        npc.node.rotation = math3d.Quaternion(0, -180, 0)
+        npc.coord = {}
+        npc.path = {}
+        npc.target_coord = {}
+        npc.idle = true
+        PlayAnim(npc.node, "rifle_idle")
+    end
 end
 
 return m

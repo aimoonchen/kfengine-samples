@@ -38,6 +38,9 @@ end
 function Home.OnSpell(event, element)
     local el = event.target_element
     Home.uicontext.OnUImessage({action=el.id})
+    if el.id == "Reset" then
+        time_index = 1
+    end
     -- onAttackBtn()
     Audio.Play(sound_mouseclick1)
 end
