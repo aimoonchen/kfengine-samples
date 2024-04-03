@@ -28,9 +28,18 @@ local function PlayAnim(node, anim_name)
     animController:PlayNewExclusive(AnimationParameters(animation[anim_name]):Looped())
 end
 
-function m:Init(scene, astar)
+function m:Init(scene, astar, mesh_line)
     self.scene = scene
     self.astar = astar
+    self.mesh_line = mesh_line
+    local linedesc = MeshLineDesc()
+    linedesc.width = 15
+    linedesc.attenuation = false
+    linedesc.depth = true
+    linedesc.cache = true
+    linedesc.color = math3d.Color(0.2, 1.0, 0.2, 0.3)
+    linedesc.depth_bias = 0.001
+    self.linedesc = linedesc
 end
 
 local function PutMachineGun(node)
@@ -88,10 +97,26 @@ function m:UpdatePath(index)
     local path_list = self.astar:FindPath(npc.coord[1] - 1, npc.coord[2] - 1, npc.target_coord[1] - 1, npc.target_coord[2] - 1)
     if #path_list > 4 then
         local path = {}
-        for i=1, #path_list - 2, 2 do
-            path[#path + 1] = {path_list[i] + 1, path_list[i + 1] + 1}
+        local linePoint = {}
+        local pc = #path_list
+        for i=1, pc, 2 do
+            local row, col = path_list[i] + 1, path_list[i + 1] + 1
+            if i < pc - 1 then
+                path[#path + 1] = {row, col}
+            end
+            if i > 1 then
+                local x, z = CoordToPosition(row, col)
+                linePoint[#linePoint + 1] = math3d.Vector3(x, 0, z)
+            end
         end
         npc.path = path
+        if npc.navi_line then
+            self.mesh_line:RemoveLine(npc.navi_line)
+        end
+        local line = self.mesh_line:AddLine(linePoint, self.linedesc)
+        -- line.model_mat = math3d.Matrix3x4(math3d.Vector3(position.x, 0.0, position.z), math3d.Quaternion.IDENTITY, 1.0)
+        line.visible = true
+        npc.navi_line = line
     end
 end
 
@@ -143,6 +168,7 @@ function m:Update(timeStep)
                 else
                     npc.idle = true
                     PlayAnim(npc.node, "rifle_idle")
+                    npc.navi_line.visible = false
                 end
             end
         end

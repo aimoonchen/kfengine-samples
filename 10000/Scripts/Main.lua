@@ -480,7 +480,7 @@ function app:CreateScene(uiscene)
     self.outline_group = scene:CreateComponent(OutlineGroup.id)
     self.outline_group:SetColor(math3d.Color(0.0,0.7,0.0,1.0))
     self.mesh_line = scene:CreateComponent(MeshLine.id)
-    -- self.mesh_line:SetDepthBias(-0.0001)
+    -- self.mesh_line:SetDepthBias(-0.00001)
     -- create ui
     FairyGUI.UIPackage.AddPackage("UI/Joystick")
     local view = FairyGUI.UIPackage.CreateObject("Joystick", "Main")
@@ -515,7 +515,7 @@ function app:CreateScene(uiscene)
     self.agent      = agent
     self.anim_ctrl  = anim_ctrl
 
-    NPC:Init(scene, self.astar)
+    NPC:Init(scene, self.astar, self.mesh_line)
     CreateWorld(scene)
     CreateNavi(scene)
     -- create camera
