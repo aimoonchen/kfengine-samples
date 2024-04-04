@@ -1,8 +1,8 @@
-local json = require "Scripts/json"
-local netlua = require "Scripts/NetProxy"
+local json = require "json"
+local netlua = require "NetProxy"
 
 lobby = {
-    entry = "Scripts/Main",
+    entry = "Main",
     game_index = 0,
     yaw = 0,
     pitch = 0,
@@ -127,7 +127,7 @@ function lobby:UnLoad()
         self.game_index = 0
     end
     self.current_game = nil
-    do_unload("Scripts.Main")
+    do_unload("Main")
     -- if not self.use_package then
         cache:ReleaseResource("Scripts/Main.lua")
         cache:ReleaseResource("Scripts/Main.luac")
