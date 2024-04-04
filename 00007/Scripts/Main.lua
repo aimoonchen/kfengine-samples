@@ -8,7 +8,7 @@ local app = {
 
 local useStreaming = false
 local streamingDistance = 2
-local navigationTiles = {}
+local tileData = {}
 local addedTiles = {}
 
 function app:GetName()
@@ -60,14 +60,13 @@ function app:UpdateStreaming()
     end
 
     local jackTile = navMesh:GetTileIndex(averageJackPosition)
-    local numTiles = navMesh:GetNumTiles()
-    local beginTile = math3d.VectorMax(math3d.IntVector2(0, 0), jackTile - math3d.IntVector2(1, 1) * streamingDistance)
-    local endTile = math3d.VectorMin(jackTile + math3d.IntVector2(1, 1) * streamingDistance, numTiles - math3d.IntVector2(1, 1))
+    local beginTile = jackTile - math3d.IntVector2.ONE * streamingDistance
+    local endTile = jackTile + math3d.IntVector2.ONE * streamingDistance
 
     -- Remove tiles
-    for i, tileIdx in pairs(addedTiles) do
+    for k, tileIdx in pairs(addedTiles) do
         if not (beginTile.x <= tileIdx.x and tileIdx.x <= endTile.x and beginTile.y <= tileIdx.y and tileIdx.y <= endTile.y) then
-            addedTiles[i] = nil
+            addedTiles[k] = nil
             navMesh:RemoveTile(tileIdx)
         end
     end
@@ -75,10 +74,12 @@ function app:UpdateStreaming()
     -- Add tiles
     for z = beginTile.y, endTile.y do
         for x = beginTile.x, endTile.x do
-            local i = z * numTiles.x + x
-            if not navMesh:HasTile(math3d.IntVector2(x, z)) and navigationTiles[i] then
-                addedTiles[i] = math3d.IntVector2(x, z)
-                navMesh:AddTile(navigationTiles[i])
+            -- local i = z * numTiles.x + x
+            -- if not navMesh:HasTile(math3d.IntVector2(x, z)) and tileData[i] then
+            local tileIdx = math3d.IntVector2(x, z)
+            if not navMesh:HasTile(tileIdx) and tileData[x..z] then
+                addedTiles[x..z] = tileIdx
+                navMesh:AddTile(tileData[x..z])
             end
         end
     end
@@ -86,15 +87,12 @@ end
 
 function app:SaveNavigationData()
     local navMesh = self.scene:GetComponent(DynamicNavigationMesh.id)
-    navigationTiles = {}
+    tileData = {}
     addedTiles = {}
-    local numTiles = navMesh:GetNumTiles()
-
-    for z = 0, numTiles.y - 1 do
-        for x = 0, numTiles.x - 1 do
-            local i = z * numTiles.x + x
-            navigationTiles[i] = navMesh:GetTileData(math3d.IntVector2(x, z))
-        end
+    local tileIndices = navMesh:GetAllTileIndices()
+    for i = 1, #tileIndices do
+        local ti = tileIndices[i]
+        tileData[ti.x..ti.y] = navMesh:GetTileData(math3d.IntVector2(ti.x, ti.y))
     end
 end
 

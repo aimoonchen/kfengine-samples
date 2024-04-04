@@ -1,5 +1,5 @@
-local city = require "Scripts/City"
-local npc = require "Scripts/NPC"
+local city = require "City"
+local npc = require "NPC"
 local CAMERA_MIN_DIST <const> = 5
 local CAMERA_INITIAL_DIST <const> = 30
 local CAMERA_MAX_DIST <const> = 100
