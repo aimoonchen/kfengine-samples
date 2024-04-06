@@ -11,7 +11,8 @@ local app = {
     yaw = 0,
     pitch = 30,
     MOVE_SPEED = 6.0,
-    character = {}
+    character = {},
+    rmlui_comp = {}
 }
 local OutlineTag = "Outline"
 function app:GetName()
@@ -455,7 +456,7 @@ function app:CreateRMLUI()
     -- uicomp:SetResource("UI/flat-buttons-2.rml", app)
     -- uicomp:SetResource("UI/checkbox-radio-droplist.rml", app)
     -- uicomp:SetResource("UI/VisualTests/flex_01.rml", app)
-    self.rmlui_comp = uicomp
+    self.rmlui_comp[#self.rmlui_comp + 1] = uicomp
 end
 
 function app:CreateScene(uiscene)
@@ -575,15 +576,34 @@ function app:Load(viewport, uiroot)
     if not self.scene then
         self:CreateScene(uiroot)
     end
+    for _, comp in ipairs(self.rmlui_comp) do
+        comp:SetEnabled(true)
+    end
+    if self.ui_view then
+        self.uiscene.groot:AddChild(self.ui_view)
+    end
     viewport:SetScene(self.scene)
     local camera = self.camera_node:GetComponent(Camera.id)
     viewport:SetCamera(camera)
     Effekseer.SetCamera(camera)
-    
-    if self.ui_view then
-        self.uiscene.groot:AddChild(self.ui_view)
-    end
     self:SubscribeToEvents()
+end
+
+-- TODO: move this function to engine scripts
+local function unload_module(moduleName)
+    for key, _ in pairs(package.preload) do
+        if string.find(tostring(key), moduleName) == 1 then
+            package.preload[key] = nil
+        end
+    end
+    for key, _ in pairs(package.loaded) do
+        if string.find(tostring(key), moduleName) == 1 then
+            package.loaded[key] = nil
+        end
+    end
+    local filename = "Scripts/"..moduleName
+    cache:ReleaseResource(filename..".lua")
+    cache:ReleaseResource(filename..".luac")
 end
 
 function app:UnLoad()
@@ -594,7 +614,13 @@ function app:UnLoad()
     if self.ui_view then
         self.uiscene.groot:RemoveChild(self.ui_view)
     end
+    for _, comp in ipairs(self.rmlui_comp) do
+        comp:SetEnabled(false)
+    end
     self:UnSubscribeToEvents()
+    Map:StopEffect()
+    -- TODO: for same name with 10001 example
+    unload_module("NPC")
 end
 
 function app:SubscribeToEvents()

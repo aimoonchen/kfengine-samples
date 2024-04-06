@@ -207,4 +207,9 @@ function m:StartFall(coords)
     self.last_fall_coords = coords
 end
 
+function m:StopEffect()
+    for _, e in pairs(self.effects) do
+        e:Stop()
+    end
+end
 return m

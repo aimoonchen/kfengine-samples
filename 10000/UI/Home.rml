@@ -2,6 +2,7 @@
     <head>
         <style>
             body {
+                pointer-events: none;
 				font-family: FZZhunYuan-M02S;
                 font-weight: normal;
 				font-style: normal;
@@ -26,7 +27,7 @@
             .progress-text {
                 width: 100%;
                 font-weight: normal;
-                font-size: 64dp;
+                font-size: 6vh;
                 text-align: center;
                 color: #333;
             }
@@ -34,25 +35,18 @@
                 width: 16vh;
                 height: 6vh;
                 background-color: #4CAF50;
-                /* border: none; */
-                color: white;
-                /* padding: 1vh 1vh; */
                 text-align: center;
-                /* text-decoration: none; */
-                display: inline-block;
                 font-size: 5vh;
                 margin: 1vh 1vh;
-                /* cursor: pointer; */
-                transition: background-color 0.5s;
             }
-            @keyframes grow {
-                0%   {transform: scale(1);}
-                50%  {transform: scale(1.1);}
-                100% {transform: scale(1);}
+            .mybutton:hover {
+                transform: scale(1.2);
+                transform-origin: center;
             }
             .mybutton:active {
                 background-color: #3e8e41;
-                animation: 0.5s cubic-in-out grow;
+                transform: scale(1.0);
+                transform-origin: center;
             }
         </style>
         <script src="Home.lua" />
@@ -63,7 +57,7 @@
             <div class="progress-text" style="position: absolute; left: 0;">{{title}}</div>  
         </div>
         
-        <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
+        <div style="pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
             <div class="mybutton" id="Flame" onclick="Home.OnSpell(event, element)">Flame</div>
             <div class="mybutton" id="Rise" onclick="Home.OnSpell(event, element)">Rise</div>
             <div class="mybutton" id="Fall" onclick="Home.OnSpell(event, element)">Fall</div>

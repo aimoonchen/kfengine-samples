@@ -10,10 +10,8 @@ local animation = {
     talking         = cache:GetResource("Animation", "Models/Blockman/Animations/Talking.ani"),
     talking1        = cache:GetResource("Animation", "Models/Blockman/Animations/Talking1.ani"),
 }
-local m = {
-    npc = {}
-}
 
+local m = {}
 
 local function PositionToCoord(wp)
     return math.floor(wp.z + 6.0) + 1, math.floor(wp.x + 6.0) + 1
@@ -40,6 +38,7 @@ function m:Init(scene, astar, mesh_line)
     linedesc.color = math3d.Color(0.2, 1.0, 0.2, 0.3)
     linedesc.depth_bias = 0.001
     self.linedesc = linedesc
+    self.npc = {}
 end
 
 local function PutMachineGun(node)
@@ -216,6 +215,9 @@ function m:ResetChase()
         npc.path = {}
         npc.target_coord = {}
         npc.idle = true
+        if npc.navi_line then
+            npc.navi_line.visible = false
+        end
         PlayAnim(npc.node, "rifle_idle")
     end
 end

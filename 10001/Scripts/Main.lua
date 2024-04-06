@@ -779,6 +779,23 @@ function app:Load(viewport, uiroot)
     self:SubscribeToEvents()
 end
 
+-- TODO: move this function to engine scripts
+local function unload_module(moduleName)
+    for key, _ in pairs(package.preload) do
+        if string.find(tostring(key), moduleName) == 1 then
+            package.preload[key] = nil
+        end
+    end
+    for key, _ in pairs(package.loaded) do
+        if string.find(tostring(key), moduleName) == 1 then
+            package.loaded[key] = nil
+        end
+    end
+    local filename = "Scripts/"..moduleName
+    cache:ReleaseResource(filename..".lua")
+    cache:ReleaseResource(filename..".luac")
+end
+
 function app:UnLoad()
     if not self.running then
         return
@@ -794,6 +811,8 @@ function app:UnLoad()
         self.effect:Stop()
     end
     self:UnSubscribeToEvents()
+    -- TODO: for same name with 10000 example
+    unload_module("NPC")
 end
 
 function app:SubscribeToEvents()
