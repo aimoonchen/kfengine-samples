@@ -61,6 +61,7 @@
             <div class="mybutton" id="Flame" onclick="Home.OnSpell(event, element)">Flame</div>
             <div class="mybutton" id="Rise" onclick="Home.OnSpell(event, element)">Rise</div>
             <div class="mybutton" id="Fall" onclick="Home.OnSpell(event, element)">Fall</div>
+            <div class="mybutton" id="ShowPath" onclick="Home.OnSpell(event, element)">Path</div>
             <div class="mybutton" id="Reset" onclick="Home.OnSpell(event, element)">Reset</div>
             <!--
             <div style="border: 4px rgba(0,255,50,160); border-radius: 15vh; width: 15vh; height: 15vh; background-color: rgba(150,50,0,255);" onclick="Home.OnAttack(event, element)">

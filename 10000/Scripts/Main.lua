@@ -276,6 +276,8 @@ function app.OnUImessage(event)
         Map:StartFlame()
     elseif event.action == "Reset" then
         NPC:ResetChase()
+    elseif event.action == "ShowPath" then
+        NPC:ShowPath()
     end
 end
 

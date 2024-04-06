@@ -38,6 +38,14 @@ function m:Init(scene, astar, mesh_line)
     linedesc.color = math3d.Color(0.2, 1.0, 0.2, 0.3)
     linedesc.depth_bias = 0.001
     self.linedesc = linedesc
+    local nocache_linedesc = MeshLineDesc()
+    nocache_linedesc.width = 15
+    nocache_linedesc.attenuation = false
+    nocache_linedesc.depth = true
+    nocache_linedesc.cache = true
+    nocache_linedesc.color = math3d.Color(0.2, 1.0, 0.2, 0.3)
+    nocache_linedesc.depth_bias = 0.001
+    self.nocache_linedesc = nocache_linedesc
     self.npc = {}
 end
 
@@ -114,7 +122,7 @@ function m:UpdatePath(index)
         end
         local line = self.mesh_line:AddLine(linePoint, self.linedesc)
         -- line.model_mat = math3d.Matrix3x4(math3d.Vector3(position.x, 0.0, position.z), math3d.Quaternion.IDENTITY, 1.0)
-        line.visible = true
+        line.visible = false
         npc.navi_line = line
     end
 end
@@ -127,8 +135,7 @@ function m:Update(timeStep)
         end
         local row, col = PositionToCoord(npc.target.world_position)
         if npc.target_coord[1] ~= row or npc.target_coord[2] ~= col then
-            npc.target_coord[1] = row
-            npc.target_coord[2] = col
+            npc.target_coord[1], npc.target_coord[2] = row, col
             self:UpdatePath(index)
             if npc.action and action_manager:GetNumActions(npc.node) ~= 0 then
                 local coord = npc.path[#npc.path]
@@ -164,10 +171,15 @@ function m:Update(timeStep)
                         PlayAnim(npc.node, "rifle_run")
                     end
                     npc.action = action_manager:AddAction(ActionBuilder():MoveBy(1, math3d.Vector3(dx, 0, dz)):Build(), npc.node)
+                    if self.show_path and npc.navi_line and not npc.navi_line.visible then
+                        npc.navi_line.visible = true
+                    end
                 else
                     npc.idle = true
                     PlayAnim(npc.node, "rifle_idle")
-                    npc.navi_line.visible = false
+                    if npc.navi_line then
+                        self.mesh_line:RemoveLine(npc.navi_line)
+                    end
                 end
             end
         end
@@ -219,6 +231,19 @@ function m:ResetChase()
             npc.navi_line.visible = false
         end
         PlayAnim(npc.node, "rifle_idle")
+    end
+end
+
+function m:ShowPath()
+    if not self.show_path then
+        self.show_path = true
+    else
+        self.show_path = false
+    end
+    for _, npc in ipairs(self.npc) do
+        if npc.navi_line then
+            npc.navi_line.visible = self.show_path
+        end
     end
 end
 
