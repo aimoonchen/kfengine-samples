@@ -1,6 +1,5 @@
 local m = {
-    cid = 0,
-    timer = {}
+    timers = {}
 }
 
 function m:AddTimer(interval, func, repeat_count, delay, paused)
@@ -22,32 +21,41 @@ function m:AddTimer(interval, func, repeat_count, delay, paused)
             t.count = t.count + 1
         end
     end
-    self.cid = self.cid + 1
-    self.timer[self.cid] = t
-    return self.cid
+    self.timers[#self.timers + 1] = t
+    return t
 end
 
-function m:DelTimer(tid)
-    self.timer[tid] = {}
+function m:DelTimer(t)
+    for i = #self.timers, 1, -1 do
+        if self.timers[i] == t then
+          table.remove(self.timers, i)
+          break
+        end
+    end
+end
+
+function m:Clean()
+    self.timers = {}
 end
 
 function m:StartTimer(tid)
-    self.timer[tid].paused = false
+    self.timers[tid].paused = false
 end
 
-function m:DoCall(tid)
-    local t = self.timer[tid]
+function m:DoCall(idx)
+    local t = self.timers[idx]
     t.func()
     if t.repeat_count and t.repeat_count > 1 then
         t.count = t.count + 1
         if t.count >= t.repeat_count then
-            self.timer[tid] = {}
+            table.remove(self.timers, idx)
         end
     end
 end
 
 function m:Update(timeStep)
-    for i, t in ipairs(self.timer) do
+    for i = #self.timers, 1, -1 do
+        local t = self.timers[i]
         if not t.paused then
             t.current = t.current + timeStep
             if t.current >= t.interval then

@@ -623,6 +623,8 @@ function app:UnLoad()
     Map:StopEffect()
     -- TODO: for same name with 10001 example
     unload_module("NPC")
+    Map:Clean()
+    Timer:Clean()
 end
 
 function app:SubscribeToEvents()

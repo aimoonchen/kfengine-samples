@@ -117,11 +117,15 @@ function m:Init(scene, start_x)
     for _, e in pairs(self.effects) do
         e:Play()
     end
-    Timer:AddTimer(4, function ()
+    self.shield_timer = Timer:AddTimer(4, function ()
         reset_shield(self.effects.shield1)
         reset_shield(self.effects.shield2)
     end, 0, 4)
     -- Timer:AddTimer(15, function () self.effects.flame:Play() end, 0, 15)
+end
+
+function m:Clean()
+    Timer:DelTimer(self.shield_timer)
 end
 
 function m:ShowGrid(row, col, visible)

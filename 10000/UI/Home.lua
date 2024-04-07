@@ -23,7 +23,7 @@ function Home.OnPostLoad(document)
     comp:AddUpdateListener(Home.Update)
     Home.rmlui_omponent = comp
     Home.uicontext = rmlui.uicontext[Home.rmlui_omponent:GetResource()]
-    Timer:AddTimer(5, function ()
+    Home.timer = Timer:AddTimer(5, function ()
         Home.datamodel.title = time_name[time_index]
         Home.uicontext.StartChase(time_index)
         time_index = time_index < #time_name and time_index + 1 or 1
@@ -33,6 +33,9 @@ end
 
 function Home.OnUnload(document)
     -- rmlui.context:CloseDataModel(Home.datamodel, "HomeData")
+    Timer:DelTimer(Home.timer)
+    time_index = 1
+    time = 0
 end
 
 function Home.OnSpell(event, element)
