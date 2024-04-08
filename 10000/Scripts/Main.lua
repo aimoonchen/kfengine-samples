@@ -1,5 +1,4 @@
 -- require("LuaPanda").start("127.0.0.1",8818);
-
 local Item = require "Item"
 local Map = require "Map"
 local Utils = require "Utils"
@@ -304,29 +303,18 @@ local function CreateMap(scene, size, space)
         NPC:CreateNpc(names0[i], math3d.Vector3(location.x, 1, location.z), math3d.Vector3(0.0015, 0.0015, 0.0015), "rifle_idle", colors[i])
         location.x = location.x + rs
     end
-    local node = scene:CreateChild("LeftWall")
-    node.position = math3d.Vector3(-6.5, 0.5, 0.0)
-    node.scale = math3d.Vector3(1, 1, 14)
-    local object = node:CreateComponent(StaticModel.id)
-    object:SetModel(model)
-    object:SetMaterial(mtl:Clone())
-    object:SetCastShadows(true)
-
-    node = scene:CreateChild("RightWall")
-    node.position = math3d.Vector3(6.5, 0.5, 0.0)
-    node.scale = math3d.Vector3(1, 1, 14)
-    object = node:CreateComponent(StaticModel.id)
-    object:SetModel(model)
-    object:SetMaterial(mtl:Clone())
-    object:SetCastShadows(true)
-
-    node = scene:CreateChild("BottomWall")
-    node.position = math3d.Vector3(0.0, 0.5, 6.5)
-    node.scale = math3d.Vector3(12, 1, 1)
-    object = node:CreateComponent(StaticModel.id)
-    object:SetModel(model)
-    object:SetMaterial(mtl:Clone())
-    object:SetCastShadows(true)
+    local create_wall = function(name, position, scale)
+        local node = scene:CreateChild(name)
+        node.position = position
+        node.scale = scale
+        local object = node:CreateComponent(StaticModel.id)
+        object:SetModel(model)
+        object:SetMaterial(mtl:Clone())
+        object:SetCastShadows(true)
+    end
+    create_wall("LeftWall", math3d.Vector3(-6.5, 0.5, 0.0), math3d.Vector3(1, 1, 14))
+    create_wall("RightWall", math3d.Vector3(6.5, 0.5, 0.0), math3d.Vector3(1, 1, 14))
+    create_wall("BottomWall", math3d.Vector3(0.0, 0.5, 6.5), math3d.Vector3(12, 1, 1))
 
     Map:Init(scene, start_x)
 end

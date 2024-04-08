@@ -31,6 +31,7 @@ local function reset_shield(effect)
 end
 
 function m:Init(scene, start_x)
+    self.grid_alpha_anim = {}
     self.scene = scene
     self.mesh_line = scene:GetComponent(MeshLine.id)
     local grid_linedesc = MeshLineDesc()
@@ -40,6 +41,7 @@ function m:Init(scene, start_x)
     grid_linedesc.cache = true
     grid_linedesc.color = math3d.Color(1.0, 1.0, 0.0, 0.8)
     grid_linedesc.depth_bias = 0.001
+    self.grid_linedesc = grid_linedesc
 
     local size = 1
     local gap = 0.1
@@ -156,58 +158,113 @@ function m:Update(timeStep)
     if self:ResetCubes(self.last_fall_coords) then
         self.last_fall_coords = nil
     end
+    for i = #self.grid_alpha_anim, 1, -1 do
+        local anim = self.grid_alpha_anim[i]
+        if anim.counter > 0 then
+            anim.current = anim.current + timeStep
+            if anim.current >= anim.interval then
+                anim.forward = not anim.forward
+                anim.current = anim.current - anim.interval
+                anim.counter = anim.counter - 1
+            end
+            if anim.counter == 0 then
+                for _, coord in ipairs(anim.coords) do
+                    local grid = self.grids[coord[1]][coord[2]]
+                    grid.color = anim.origin_color
+                    grid.visible = false
+                end
+                for _, coord in ipairs(anim.coords) do
+                    anim.on_finish(coord[1], coord[2])
+                end
+                table.remove(self.grid_alpha_anim, i)
+            else
+                for _, coord in ipairs(anim.coords) do
+                    local grid = self.grids[coord[1]][coord[2]]
+                    local color = grid.color
+                    local alpha = anim.forward and anim.current * 4 or (1 - anim.current * 4)
+                    grid.color = math3d.Color(color.r, color.g, color.b, alpha)
+                end
+            end
+        end
+    end
 end
 
 function m:StartFlame()
     self.effects.flame:Play()
 end
 
+function m:do_rise(row, col)
+    local ceil_node = self.cubes[row][col]
+    local pos = ceil_node.node.position
+    ceil_node.node.position = math3d.Vector3(pos.x, -0.5, pos.z)
+    ceil_node.node:SetEnabled(true)
+    local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0, 1, 0)):ExponentialIn():DelayTime(1.5):JumpBy(math3d.Vector3(0, -1, 0)):Build()
+    action_manager:AddAction(action, ceil_node.node)
+
+    local object = ceil_node.node:GetComponent(StaticModel.id)
+    local mtl = object:GetMaterial()
+    mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)))
+    local color_action = ActionBuilder():DelayTime(1.5):ShaderParameterFromTo(1.0, "MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)), Variant(math3d.Color(0.0, 0.0, 0.8, 0.0))):Build()
+    action_manager:AddAction(color_action, mtl)
+
+    self:ShowGrid(row, col, true)
+end
+
+local function create_alpha_anim(origin_color, on_finish)
+    return {
+        current = 0,
+        counter = 4,
+        interval = 0.25, -- 1/counter
+        forward = true,
+        coords = {},
+        origin_color = origin_color,
+        on_finish = on_finish
+    }
+end
+
 function m:StartRise(coords)
     if self.last_rise_coords then
         return
     end
+    local alpha_anim = create_alpha_anim(self.grid_linedesc.color, function(row, col) self:do_rise(row, col) end)
     for _, coord in ipairs(coords) do
-        local ceil_node = self.cubes[coord[1]][coord[2]]
-        local pos = ceil_node.node.position
-        ceil_node.node.position = math3d.Vector3(pos.x, -0.5, pos.z)
-        ceil_node.node:SetEnabled(true)
-        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0, 1, 0)):ExponentialIn():DelayTime(1.5):JumpBy(math3d.Vector3(0, -1, 0)):Build()
-        action_manager:AddAction(action, ceil_node.node)
-
-        local object = ceil_node.node:GetComponent(StaticModel.id)
-        local mtl = object:GetMaterial()
-        mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)))
-        local color_action = ActionBuilder():DelayTime(1.5):ShaderParameterFromTo(1.0, "MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)), Variant(math3d.Color(0.0, 0.0, 0.8, 0.0))):Build()
-        action_manager:AddAction(color_action, mtl)
-
-        self:ShowGrid(coord[1], coord[2], true)
+        alpha_anim.coords[#alpha_anim.coords + 1] = coord
+        -- self:do_rise(coord[1], coord[2])
     end
+    self.grid_alpha_anim[#self.grid_alpha_anim + 1] = alpha_anim
     self.last_rise_coords = coords
+end
+
+function m:do_fall(row, col)
+    local ceil_node = self.cubes[row][col]
+    local pos = ceil_node.node.position
+    ceil_node.node.position = math3d.Vector3(pos.x, 2.5, pos.z)
+    ceil_node.node:SetEnabled(true)
+    local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0.0, -2.0, 0.0)):BackIn():DelayTime(1.5):Build()
+    action_manager:AddAction(action, ceil_node.node)
+
+    local object = ceil_node.node:GetComponent(StaticModel.id)
+    local mtl = object:GetMaterial()
+    mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)))
+    local color_action = ActionBuilder():ShaderParameterFromTo(0.5, "MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)), Variant(math3d.Color(0.5, 0.0, 0.0, 1.0)))
+        :DelayTime(1.5)
+        :ShaderParameterFromTo(0.5, "MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 1.0)), Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)))
+        :Build()
+    action_manager:AddAction(color_action, mtl)
+
+    self:ShowGrid(row, col, true)
 end
 
 function m:StartFall(coords)
     if self.last_fall_coords then
         return
     end
+    local alpha_anim = create_alpha_anim(self.grid_linedesc.color, function(row, col) self:do_fall(row, col) end)
     for _, coord in ipairs(coords) do
-        local ceil_node = self.cubes[coord[1]][coord[2]]
-        local pos = ceil_node.node.position
-        ceil_node.node.position = math3d.Vector3(pos.x, 2.5, pos.z)
-        ceil_node.node:SetEnabled(true)
-        local action = ActionBuilder():MoveBy(1.0, math3d.Vector3(0.0, -2.0, 0.0)):BackIn():DelayTime(1.5):Build()
-        action_manager:AddAction(action, ceil_node.node)
-
-        local object = ceil_node.node:GetComponent(StaticModel.id)
-        local mtl = object:GetMaterial()
-        mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)))
-        local color_action = ActionBuilder():ShaderParameterFromTo(0.5, "MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)), Variant(math3d.Color(0.5, 0.0, 0.0, 1.0)))
-            :DelayTime(1.5)
-            :ShaderParameterFromTo(0.5, "MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 1.0)), Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)))
-            :Build()
-        action_manager:AddAction(color_action, mtl)
-
-        self:ShowGrid(coord[1], coord[2], true)
+        alpha_anim.coords[#alpha_anim.coords + 1] = coord
+        -- self:do_fall(coord[1], coord[2])
     end
+    self.grid_alpha_anim[#self.grid_alpha_anim + 1] = alpha_anim
     self.last_fall_coords = coords
 end
 
