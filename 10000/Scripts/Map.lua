@@ -151,40 +151,40 @@ function m:ResetCubes(active_coords)
 end
 
 function m:Update(timeStep)
-    if self:ResetCubes(self.last_rise_coords) then
-        self.last_rise_coords = nil
-    end
-
-    if self:ResetCubes(self.last_fall_coords) then
-        self.last_fall_coords = nil
-    end
-    for i = #self.grid_alpha_anim, 1, -1 do
-        local anim = self.grid_alpha_anim[i]
-        if anim.counter > 0 then
-            anim.current = anim.current + timeStep
-            if anim.current >= anim.interval then
-                anim.forward = not anim.forward
-                anim.current = anim.current - anim.interval
-                anim.counter = anim.counter - 1
-            end
-            if anim.counter == 0 then
-                for _, coord in ipairs(anim.coords) do
-                    local grid = self.grids[coord[1]][coord[2]]
-                    grid.color = anim.origin_color
-                    grid.visible = false
+    if #self.grid_alpha_anim > 0 then
+        for i = #self.grid_alpha_anim, 1, -1 do
+            local anim = self.grid_alpha_anim[i]
+            if anim.counter > 0 then
+                anim.current = anim.current + timeStep
+                if anim.current >= anim.interval then
+                    anim.forward = not anim.forward
+                    anim.current = anim.current - anim.interval
+                    anim.counter = anim.counter - 1
                 end
-                for _, coord in ipairs(anim.coords) do
-                    anim.on_finish(coord[1], coord[2])
-                end
-                table.remove(self.grid_alpha_anim, i)
-            else
-                for _, coord in ipairs(anim.coords) do
-                    local grid = self.grids[coord[1]][coord[2]]
-                    local color = grid.color
-                    local alpha = anim.forward and anim.current * 4 or (1 - anim.current * 4)
-                    grid.color = math3d.Color(color.r, color.g, color.b, alpha)
+                if anim.counter == 0 then
+                    for _, coord in ipairs(anim.coords) do
+                        local grid = self.grids[coord[1]][coord[2]]
+                        grid.color = self.grid_linedesc.color
+                        grid.visible = false
+                        anim.on_finish(coord[1], coord[2])
+                    end
+                    table.remove(self.grid_alpha_anim, i)
+                else
+                    for _, coord in ipairs(anim.coords) do
+                        local grid = self.grids[coord[1]][coord[2]]
+                        local color = self.grid_linedesc.color
+                        local alpha = anim.forward and anim.current * 4 or (1 - anim.current * 4)
+                        grid.color = math3d.Color(color.r, color.g, color.b, alpha)
+                    end
                 end
             end
+        end
+    else
+        if self:ResetCubes(self.last_rise_coords) then
+            self.last_rise_coords = nil
+        end
+        if self:ResetCubes(self.last_fall_coords) then
+            self.last_fall_coords = nil
         end
     end
 end
@@ -206,19 +206,19 @@ function m:do_rise(row, col)
     mtl:SetShaderParameter("MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)))
     local color_action = ActionBuilder():DelayTime(1.5):ShaderParameterFromTo(1.0, "MatDiffColor", Variant(math3d.Color(0.0, 0.0, 0.8, 1.0)), Variant(math3d.Color(0.0, 0.0, 0.8, 0.0))):Build()
     action_manager:AddAction(color_action, mtl)
-
-    self:ShowGrid(row, col, true)
 end
 
-local function create_alpha_anim(origin_color, on_finish)
-    return {
+function m:CreateAlphaAnim(coords, on_finish)
+    for _, coord in ipairs(coords) do
+        self.grids[coord[1]][coord[2]].visible = true
+    end
+    self.grid_alpha_anim[#self.grid_alpha_anim + 1] = {
         current = 0,
         counter = 4,
         interval = 0.25, -- 1/counter
         forward = true,
-        coords = {},
-        origin_color = origin_color,
-        on_finish = on_finish
+        on_finish = on_finish,
+        coords = coords
     }
 end
 
@@ -226,12 +226,10 @@ function m:StartRise(coords)
     if self.last_rise_coords then
         return
     end
-    local alpha_anim = create_alpha_anim(self.grid_linedesc.color, function(row, col) self:do_rise(row, col) end)
-    for _, coord in ipairs(coords) do
-        alpha_anim.coords[#alpha_anim.coords + 1] = coord
-        -- self:do_rise(coord[1], coord[2])
-    end
-    self.grid_alpha_anim[#self.grid_alpha_anim + 1] = alpha_anim
+    self:CreateAlphaAnim(coords, function(row, col) self:do_rise(row, col) end)
+    -- for _, coord in ipairs(coords) do
+    --     self:do_rise(coord[1], coord[2])
+    -- end
     self.last_rise_coords = coords
 end
 
@@ -251,20 +249,16 @@ function m:do_fall(row, col)
         :ShaderParameterFromTo(0.5, "MatDiffColor", Variant(math3d.Color(0.5, 0.0, 0.0, 1.0)), Variant(math3d.Color(0.5, 0.0, 0.0, 0.0)))
         :Build()
     action_manager:AddAction(color_action, mtl)
-
-    self:ShowGrid(row, col, true)
 end
 
 function m:StartFall(coords)
     if self.last_fall_coords then
         return
     end
-    local alpha_anim = create_alpha_anim(self.grid_linedesc.color, function(row, col) self:do_fall(row, col) end)
-    for _, coord in ipairs(coords) do
-        alpha_anim.coords[#alpha_anim.coords + 1] = coord
-        -- self:do_fall(coord[1], coord[2])
-    end
-    self.grid_alpha_anim[#self.grid_alpha_anim + 1] = alpha_anim
+    self:CreateAlphaAnim(coords, function(row, col) self:do_fall(row, col) end)
+    -- for _, coord in ipairs(coords) do
+    --     self:do_fall(coord[1], coord[2])
+    -- end
     self.last_fall_coords = coords
 end
 
