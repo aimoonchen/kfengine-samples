@@ -31,7 +31,7 @@ function m:Init(scene, astar, mesh_line)
     self.astar = astar
     self.mesh_line = mesh_line
     local linedesc = MeshLineDesc()
-    linedesc.width = 15
+    linedesc.width = 16
     linedesc.attenuation = false
     linedesc.depth = true
     linedesc.cache = true
@@ -39,7 +39,7 @@ function m:Init(scene, astar, mesh_line)
     linedesc.depth_bias = 0.001
     self.linedesc = linedesc
     local nocache_linedesc = MeshLineDesc()
-    nocache_linedesc.width = 15
+    nocache_linedesc.width = 16
     nocache_linedesc.attenuation = false
     nocache_linedesc.depth = true
     nocache_linedesc.cache = true
