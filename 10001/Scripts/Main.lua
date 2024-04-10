@@ -160,15 +160,15 @@ function app:OnUpdate(eventType, eventData)
     end
     --[[ meshline test
     if not self.line_desc then
-        -- color, opacity, width, attenuation, depth, repeat, visibility, texture, alpha_texture
+        -- color, opacity, width, world_space, depth, repeat, visibility, texture, alpha_texture
         self.line_desc = MeshLineDesc()
-        self.line_desc.width = 10
-        self.line_desc.attenuation = false
+        self.line_desc.width = 2
+        self.line_desc.world_space = false
         -- self.line_desc.depth = true
         -- self.line_desc.alpha_fade = math3d.Vector2(0.2, 0.0)
         self.line_desc.model_mat = math3d.Matrix3x4(math3d.Vector3(0.0, 5.0, 0.0), math3d.Quaternion.IDENTITY, 1.0)
-        -- self.line_desc.width = 0.2
-        -- self.line_desc.attenuation = true
+        -- self.line_desc.width = 0.1
+        -- self.line_desc.world_space = true
         
         -- self.line_desc.cache = true
         -- local lineHeight = 2.0
@@ -176,8 +176,8 @@ function app:OnUpdate(eventType, eventData)
         -- self.l1 = self.mesh_line:AddLine(math3d.Vector3(0.0, lineHeight, -5.0), math3d.Vector3(0.0, lineHeight, 5.0), self.line_desc)
         local size = 1.0
         local grid_linedesc = MeshLineDesc()
-        grid_linedesc.width = 8
-        grid_linedesc.attenuation = false
+        grid_linedesc.width = 2
+        grid_linedesc.world_space = false
         grid_linedesc.depth = false
         grid_linedesc.cache = true
         grid_linedesc.color = math3d.Color(1.0, 0.0, 0.0, 0.5)

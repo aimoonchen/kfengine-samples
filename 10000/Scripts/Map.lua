@@ -35,8 +35,8 @@ function m:Init(scene, start_x)
     self.scene = scene
     self.mesh_line = scene:GetComponent(MeshLine.id)
     local grid_linedesc = MeshLineDesc()
-    grid_linedesc.width = 16
-    grid_linedesc.attenuation = false
+    grid_linedesc.width = 4
+    grid_linedesc.world_space = false
     grid_linedesc.depth = true
     grid_linedesc.cache = true
     grid_linedesc.color = math3d.Color(1.0, 1.0, 0.0, 0.8)

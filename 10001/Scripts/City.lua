@@ -442,8 +442,8 @@ function city:GetGrid(row, col)
     if not self.grids[key] then
         if not self.grid_linedesc then
             local grid_linedesc = MeshLineDesc()
-            grid_linedesc.width = 8
-            grid_linedesc.attenuation = false
+            grid_linedesc.width = 2
+            grid_linedesc.world_space = false
             grid_linedesc.depth = true
             grid_linedesc.cache = true
             grid_linedesc.color = math3d.Color(0.0, 1.0, 0.0, 0.5)
