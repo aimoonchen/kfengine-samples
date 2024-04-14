@@ -1,5 +1,6 @@
 <rml>
     <head>
+        <link type="text/rcss" href="./Style/invader.rcss"/>
         <style>
             body {
                 pointer-events: none;
@@ -48,15 +49,60 @@
                 transform: scale(1.0);
                 transform-origin: center;
             }
+            progress {
+                display: inline-block;
+                vertical-align: middle;
+                /* border: 2px red; */
+            }
+            #gauge {
+                decorator: image( gauge );
+                width: 200dp;
+                height: 172dp;
+                fill-image: gauge-fill;
+                margin-left: 50dp;
+            }
+            #progress_horizontal {
+                decorator: tiled-horizontal( progress-l, progress-c, progress-r );
+                width: 300dp;
+                height: 68dp;
+            }
+            #progress_horizontal fill {
+                decorator: tiled-horizontal( progress-fill-l, progress-fill-c, progress-fill-r );
+                margin: 0 14dp;
+                padding-left: 28dp;
+            }
+            #gauge_value, #progress_value {
+                font-size: 32dp;
+                color: #4ADB2D;
+                text-align: center;
+                font-effect: outline( 4dp #555 );
+            }
+            #gauge_value {
+                width: 200dp;
+                margin-left: -200dp;
+                display: inline-block;
+                /* border: 2px green; */
+            }
+            #progress_value {
+                width: 100dp;
+                margin-left: -20dp;
+                display: inline-block;
+                /* border: 2px green; */
+            }
         </style>
         <script src="Home.lua" />
     </head>
     <body onpostload="Home.OnPostLoad(document)" onunload="Home.OnUnload(document)" data-model="HomeData">
         <div class="progress-bar">  
-            <div class="progress-bar-inner" data-style-width="time_percent + '%'"></div>  
+            <div class="progress-bar-inner" data-style-width="time_percent * 100 + '%'"></div>  
             <div class="progress-text" style="position: absolute; left: 0;">{{title}}</div>  
         </div>
-        
+        <progress id="gauge" direction="clockwise" start-edge="bottom" data-value="time_percent">
+        </progress>
+        <div id="gauge_value">{{round(time_percent * 100) + '%'}}</div>
+        <br/>
+        <progress id="progress_horizontal" direction="right" data-value="time_percent"/>
+        <div id="progress_value">{{round(time_percent * 100) + '%'}}</div>
         <div style="pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
             <div class="mybutton" id="Flame" onclick="Home.OnSpell(event, element)">Flame</div>
             <div class="mybutton" id="Rise" onclick="Home.OnSpell(event, element)">Rise</div>

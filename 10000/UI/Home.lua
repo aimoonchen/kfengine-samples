@@ -4,7 +4,7 @@ local time_name = {"子时-鼠","丑时-牛","寅时-虎","卯时-兔","辰时-�
 Home = Home or {
     datamodel = rmlui.context:OpenDataModel("HomeData", {
         title = time_name[time_index],
-        time_percent = 0
+        time_percent = 0,
     })
 }
 
@@ -13,8 +13,8 @@ local time = 0
 
 function Home.Update(timeStep, document)
     time = time + timeStep
-    local percent = time / 5 * 100
-    Home.datamodel.time_percent = (percent > 100) and 100 or percent
+    local percent = time / 5
+    Home.datamodel.time_percent = (percent > 1) and 1 or percent
 end
 
 function Home.OnPostLoad(document)
