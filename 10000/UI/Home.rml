@@ -56,36 +56,36 @@
             }
             #gauge {
                 decorator: image( gauge );
-                width: 200dp;
-                height: 172dp;
+                width: 100dp;
+                height: 86dp;
                 fill-image: gauge-fill;
-                margin-left: 50dp;
+                margin-left: 25dp;
             }
             #progress_horizontal {
                 decorator: tiled-horizontal( progress-l, progress-c, progress-r );
-                width: 300dp;
-                height: 68dp;
+                width: 150dp;
+                height: 34dp;
             }
             #progress_horizontal fill {
                 decorator: tiled-horizontal( progress-fill-l, progress-fill-c, progress-fill-r );
-                margin: 0 14dp;
-                padding-left: 28dp;
+                margin: 0 7dp;
+                padding-left: 14dp;
             }
             #gauge_value, #progress_value {
-                font-size: 32dp;
+                font-size: 16dp;
                 color: #4ADB2D;
                 text-align: center;
                 font-effect: outline( 4dp #555 );
             }
             #gauge_value {
-                width: 200dp;
-                margin-left: -200dp;
+                width: 100dp;
+                margin-left: -100dp;
                 display: inline-block;
                 /* border: 2px green; */
             }
             #progress_value {
                 width: 100dp;
-                margin-left: -20dp;
+                margin-left: -30dp;
                 display: inline-block;
                 /* border: 2px green; */
             }
