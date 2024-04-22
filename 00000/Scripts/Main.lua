@@ -69,22 +69,25 @@ local function do_create_effect(filename, position)
     app.effects[#app.effects + 1] = effect
     emitter.position = position
     emitter.scale = math3d.Vector3(0.5, 0.5, 0.5)
-    return emitter
+    return emitter, effect
 end
 
 function app:CreateEffect()
-    local attackEmitter = do_create_effect("Effekseer/01_Suzuki01/002_sword_effect/sword_effect.efk",  math3d.Vector3(9.0, 0.1, -8.0))
-    attackEmitter.scale = math3d.Vector3(0.2, 0.2, 0.2)
-    local attackEffect = attackEmitter:GetComponent(EffekseerEmitter.id)
-    attackEffect:SetSpeed(2.0)
-    attackEffect:SetLooping(false)
-    self.attack_emitter = attackEmitter
-    self.attack_effect = attackEffect
-    do_create_effect("Effekseer/01_Suzuki01/001_magma_effect/aura.efk",  math3d.Vector3(3.8, 0.9, 15.0))
-    do_create_effect("Effekseer/01_Suzuki01/001_magma_effect/aura.efk",  math3d.Vector3(9.3, 1.1, 11.7))
-    local effect = do_create_effect("Effekseer/00_Version16/Aura01.efk",  math3d.Vector3(-19.0, 1.6, 15.0))
-    effect.scale = math3d.Vector3(1.2, 1.2, 1.2)
-    do_create_effect("Effekseer/00_Version16/Barrior01.efk",  math3d.Vector3(30, 0.0, 20.0))
+    local emitter, effect = do_create_effect("Effekseer/01_Suzuki01/002_sword_effect/sword_effect.efk",  math3d.Vector3(9.0, 0.1, -8.0))
+    emitter.scale = math3d.Vector3(0.2, 0.2, 0.2)
+    effect:SetSpeed(2.0)
+    effect:SetLooping(false)
+    self.attack_emitter = emitter
+    self.attack_effect = effect
+    local _, efk1 = do_create_effect("Effekseer/01_Suzuki01/001_magma_effect/aura.efk",  math3d.Vector3(3.8, 0.9, 15.0))
+    efk1:SetCullBoundingBox(math3d.BoundingBox(math3d.Vector3(-1.0, -1.0, -1.0), math3d.Vector3(1.0, 1.0, 1.0)))
+    local _, efk2 = do_create_effect("Effekseer/01_Suzuki01/001_magma_effect/aura.efk",  math3d.Vector3(9.3, 1.1, 11.7))
+    efk2:SetCullBoundingBox(math3d.BoundingBox(math3d.Vector3(-1.0, -1.0, -1.0), math3d.Vector3(1.0, 1.0, 1.0)))
+    local emitter2, efk3 = do_create_effect("Effekseer/00_Version16/Aura01.efk",  math3d.Vector3(-19.0, 1.6, 15.0))
+    efk3:SetCullBoundingBox(math3d.BoundingBox(math3d.Vector3(-2.0, 0.0, -2.0), math3d.Vector3(2.0, 4.0, 2.0)))
+    emitter2.scale = math3d.Vector3(1.2, 1.2, 1.2)
+    local _, efk4 = do_create_effect("Effekseer/00_Version16/Barrior01.efk",  math3d.Vector3(30, 0.0, 20.0))
+    efk4:SetCullBoundingBox(math3d.BoundingBox(math3d.Vector3(-4.0, 0.0, -4.0), math3d.Vector3(4.0, 4.0, 4.0)))
 end
 
 local function reset_cd(mask)
