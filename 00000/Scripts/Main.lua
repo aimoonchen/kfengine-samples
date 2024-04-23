@@ -75,7 +75,7 @@ end
 function app:CreateEffect()
     local emitter, effect = do_create_effect("Effekseer/01_Suzuki01/002_sword_effect/sword_effect.efk",  math3d.Vector3(9.0, 0.1, -8.0))
     emitter.scale = math3d.Vector3(0.2, 0.2, 0.2)
-    effect:SetSpeed(2.0)
+    -- effect:SetSpeed(2.0)
     effect:SetLooping(false)
     self.attack_emitter = emitter
     self.attack_effect = effect
