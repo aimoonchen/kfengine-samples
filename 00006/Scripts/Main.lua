@@ -103,7 +103,7 @@ function app:CreateScene(uiscene)
     camera.near_clip = 0.5
     camera.far_clip = 750.0
     -- Set an initial position for the camera scene node above the floor
-    cameraNode.position = math3d.Vector3(0.0, 7.0, -20.0)
+    cameraNode.position = math3d.Vector3(0.0, 15.0, -20.0)
 
     self.scene = scene
     self.camera_node = cameraNode

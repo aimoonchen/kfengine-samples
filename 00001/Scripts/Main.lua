@@ -41,8 +41,41 @@ local function Raycast(maxDistance)
     return nil, nil
 end
 
+local function GetColor()
+    return math3d.Color(math3d.Random(), math3d.Random(), math3d.Random(), 1.0)
+end
+local function SpawnBoxObject(scene, scale, position)
+    local boxNode = scene:CreateChild("SmallBox")
+    boxNode.scale = scale
+    boxNode.position = position
+    local object = boxNode:CreateComponent(StaticModel.id)
+    object:SetModel(cache:GetResource("Model", "Models/Box.mdl"))
+    object:SetMaterial(cache:GetResource("Material", "Materials/DefaultWhite.xml"):Clone())
+    object:GetMaterial():SetShaderParameter("MatDiffColor", Variant(GetColor()))
+    object:SetCastShadows(true)
+    local body = boxNode:CreateComponent(RigidBody.id)
+    body.mass = 0.25
+    body.friction = 0.75
+    local shape = boxNode:CreateComponent(CollisionShape.id)
+    shape:SetBox(math3d.Vector3.ONE)
+    -- local OBJECT_VELOCITY = 10.0
+    -- shape.linear_velocity = math3d.Vector3(0.0, 1.0, 0.0) * OBJECT_VELOCITY
+end
+local spawn_time = 0
+local spawn_interval = 2.5
+local switcher = false
 function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
+    spawn_time = spawn_time + timeStep
+    if spawn_time >= spawn_interval then
+        spawn_time = spawn_time - spawn_interval
+        switcher = not switcher
+        if switcher then
+            SpawnBoxObject(self.scene, math3d.Vector3.ONE, math3d.Vector3(-2.0, 5.0, -5))
+        else
+            SpawnBoxObject(self.scene, math3d.Vector3.ONE, math3d.Vector3(0.0, 5.0, -5))
+        end
+    end
     for _, item in ipairs(self.chat_list) do
         item.life = item.life + timeStep
         if item.life > 10.0 then
@@ -166,10 +199,6 @@ function Mover:Update(timeStep)
     if pos.x < bounds.min.x or pos.x > bounds.max.x or pos.z < bounds.min.z or pos.z > bounds.max.z then
         node:Yaw(self.rotationSpeed * timeStep)
     end
-end
-
-local function GetColor()
-    return math3d.Color(math3d.Random(), math3d.Random(), math3d.Random(), 1.0)
 end
 
 local function get_mud_mtl()
@@ -302,24 +331,6 @@ local function CreateDoor(scene)
     constraint.low_limit = math3d.Vector2(-90.0, 0.0)
     constraint.disable_collision = true
     constraint:SetOtherBody(other_body)
-end
-
-local function SpawnBoxObject(scene, scale, position)
-    local boxNode = scene:CreateChild("SmallBox")
-    boxNode.scale = scale
-    boxNode.position = position
-    local object = boxNode:CreateComponent(StaticModel.id)
-    object:SetModel(cache:GetResource("Model", "Models/Box.mdl"))
-    object:SetMaterial(cache:GetResource("Material", "Materials/DefaultWhite.xml"):Clone())
-    object:GetMaterial():SetShaderParameter("MatDiffColor", Variant(GetColor()))
-    object:SetCastShadows(true)
-    local body = boxNode:CreateComponent(RigidBody.id)
-    body.mass = 0.25
-    body.friction = 0.75
-    local shape = boxNode:CreateComponent(CollisionShape.id)
-    shape:SetBox(math3d.Vector3.ONE)
-    -- local OBJECT_VELOCITY = 10.0
-    -- shape.linear_velocity = math3d.Vector3(0.0, 1.0, 0.0) * OBJECT_VELOCITY
 end
 
 local action_nodes = {}
