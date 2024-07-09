@@ -367,6 +367,15 @@ local function HandleCollisionBegin(eventType, eventData)
     end
 end
 
+local function HandlePostUpdate(eventType, eventData)
+    if not app.character2d then
+        return
+    end
+    local character2DNode = app.character2d:GetNode()
+    local pos = character2DNode:GetPosition()
+    app.camera_node:SetPosition(math3d.Vector3(pos.x, pos.y, -10.0)) -- Camera tracks character
+end
+
 function app:Load(viewport, uiroot)
     if self.running then
         return
