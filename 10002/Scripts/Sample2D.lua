@@ -11,7 +11,7 @@ function sample2d:CreateCollisionShapesFromTMXObjects(tileMapNode, tileMapLayer,
     body:SetBodyType(BodyType2D.STATIC)
     local num = tileMapLayer:GetNumObjects()
     -- Generate physics collision shapes and rigid bodies from the tmx file's objects located in "Physics" layer
-    for i = 0, num do
+    for i = 0, num - 1 do
         local tileMapObject = tileMapLayer:GetObject(i) -- Get physics objects
         local objectType = tileMapObject:GetObjectType()
         -- Create collision shape from tmx object
@@ -63,7 +63,7 @@ function sample2d:CreatePolygonShape(node, object)
     local shape = node:CreateComponent(CollisionPolygon2D.id)
     local numVertices = object:GetNumPoints()
     shape:SetVertexCount(numVertices)
-    for i = 0, numVertices do
+    for i = 0, numVertices - 1 do
         shape:SetVertex(i, object:GetPoint(i))
     end
     shape:SetFriction(0.8)
@@ -77,7 +77,7 @@ function sample2d:CreatePolyLineShape(node, object)
     local shape = node:CreateComponent(CollisionChain2D.id)
     local numVertices = object:GetNumPoints()
     shape:SetVertexCount(numVertices)
-    for i = 0, numVertices do
+    for i = 0, numVertices - 1 do
         shape:SetVertex(i, object:GetPoint(i))
     end
     shape:SetFriction(0.8)
@@ -130,7 +130,7 @@ end
 
 function sample2d:CreateOrc()
     local node = self.scene:CreateChild("Orc")
-    node:SetScale(self.scene:GetChild("Imp", true):GetScale())
+    node:SetScale(self.scene:GetChild("Imp", true).scale)
     local animatedSprite = node:CreateComponent(AnimatedSprite2D.id )
     local animationSet = cache:GetResource("AnimationSet2D", "Urho2D/Orc/Orc.scml")
     animatedSprite:SetAnimationSet(animationSet)
@@ -270,7 +270,7 @@ function sample2d:PopulateMovingEntities(movingEntitiesLayer)
     local platformNode = self:CreateMovingPlatform()
     local num = movingEntitiesLayer:GetNumObjects()
     -- Instantiate enemies and moving platforms at each placeholder (placeholders are Poly Line objects defining a path from points)
-    for i = 0, num do
+    for i = 0, num - 1 do
         -- Get placeholder object
         local movingObject = movingEntitiesLayer:GetObject(i) -- Get placeholder object
         if movingObject:GetObjectType() == TileMapObjectType2D.POLYLINE then
@@ -314,7 +314,7 @@ function sample2d:PopulateCoins(coinsLayer)
     local coinNode = self:CreateCoin()
     local num = coinsLayer:GetNumObjects()
     -- Instantiate coins to pick at each placeholder
-    for i = 0, num do
+    for i = 0, num - 1 do
         local coinObject = coinsLayer:GetObject(i) -- Get placeholder object
         local coinClone = coinNode:Clone()
         coinClone:SetPosition2D(coinObject:GetPosition() + coinObject:GetSize() / 2 + math3d.Vector2(0.0, 0.16))
@@ -328,7 +328,7 @@ function sample2d:PopulateTriggers(triggersLayer)
     local triggerNode = self:CreateTrigger()
     local num = triggersLayer:GetNumObjects()
     -- Instantiate triggers at each placeholder (Rectangle objects)
-    for i = 0, num do
+    for i = 0, num - 1 do
         local triggerObject = triggersLayer:GetObject(i) -- Get placeholder object
         if triggerObject:GetObjectType() == TileMapObjectType2D.RECTANGLE then
             local triggerClone = triggerNode:Clone()
@@ -364,7 +364,7 @@ end
 function sample2d:CreatePathFromPoints(object, offset)
     local path = {}
     local num = object:GetNumPoints()
-    for i = 0, num do
+    for i = 0, num - 1 do
         path.push_back(object:GetPoint(i) + offset)
     end
     return path

@@ -42,7 +42,7 @@ function app:OnUpdate(eventType, eventData)
         controlDirection = math3d.Quaternion(0.0, input_system.GetJoystickDegree() - 90, 0.0) * math3d.Vector3.FORWARD
     else
         if touchEnabled then
-            for i=0, input_system:GetNumTouches()-1 do
+            for i = 0, input_system:GetNumTouches() - 1 do
                 if input_system.GetJoystickTouchID() ~= i then
                     local state = input_system:GetTouch(i)
                     --if not state.touchedElement then -- Touch on empty space
@@ -337,6 +337,22 @@ function app:TestSprite(scene)
     stretchSprite:SetSprite(sprite)
     stretchSprite:SetBorder(math3d.IntRect(25, 25, 25, 25))
     stretchSpriteNode:Translate2D(math3d.Vector2(2.0, 0.0))
+    
+    -- tilemap test
+    local tmxFile = cache:GetResource("TmxFile2D", "Urho2D/isometric_grass_and_water.tmx")
+
+    local tileMapNode = scene:CreateChild("TileMap")
+    tileMapNode.position = math3d.Vector3(0.0, 0.0, -1.0)
+
+    local tileMap = tileMapNode:CreateComponent(TileMap2D.id)
+    -- Set animation
+    tileMap:SetTmxFile(tmxFile);
+
+    --  Set camera's position
+    local info = tileMap:GetInfo()
+    local x = info:GetMapWidth() * 0.5
+    local y = info:GetMapHeight() * 0.5
+    cameraNode:SetPosition(math3d.Vector3(x, y, -10.0))
 end
 
 local PIXEL_SIZE = 0.01
