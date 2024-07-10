@@ -79,21 +79,24 @@ function app:OnSceneUpdate(eventType, eventData)
 end
 
 function app:OnPostUpdate(eventType, eventData)
+    if not self.character2d then
+        return
+    end
+    local character2DNode = self.character2d:GetNode()
+    local pos = character2DNode:GetPosition()
+    self.camera_node:SetPosition(math3d.Vector3(pos.x, pos.y, -10.0)) -- Camera tracks character
 end
 
 function app:OnPostRenderUpdate(eventType, eventData)
     if self.draw_debug then
-        self.physics_world:DrawDebugGeometry(true)
-        -- -- Visualize navigation mesh, obstacles and off-mesh connections
-        -- self.scene:GetComponent(DynamicNavigationMesh.id):DrawDebugGeometry(true)
-        -- -- Visualize agents' path and position to reach
-        -- self.scene:GetComponent(CrowdManager.id):DrawDebugGeometry(true)
+        local physicsWorld = self.scene:GetComponent(PhysicsWorld2D.id)
+        physicsWorld:DrawDebugGeometry()
+
+        local tileMapNode = self.scene:GetChild("TileMap", true)
+        local map = tileMapNode:GetComponent(TileMap2D.id)
+        map:DrawDebugGeometry(self.scene:GetComponent(DebugRenderer.id), false)
     end
 end
-
-function app:UpdateCamera(timeStep)
-end
-
 
 CharacterIsometric = ScriptObject()
 
@@ -131,37 +134,37 @@ function CharacterIsometric:Update(timeStep)
 
     -- Set direction
     local moveDir = math3d.Vector3.ZERO -- Reset
-    local speedX = math3d.Clamp(MOVE_SPEED_X / self.zoom_, 0.4, 1.0)
+    local speedX = math3d.ClampF(MOVE_SPEED_X / self.zoom_, 0.4, 1.0)
     local speedY = speedX
 
-    if input_system:GetKeyDown(KEY_A) or input_system:GetKeyDown(KEY_LEFT) then
+    if input_system:GetKeyDown(input.KEY_A) or input_system:GetKeyDown(input.KEY_LEFT) then
         moveDir = moveDir + math3d.Vector3.LEFT * speedX
         animatedSprite:SetFlipX(false) -- Flip sprite (reset to default play on the X axis)
     end
-    if input_system:GetKeyDown(KEY_D) or input_system:GetKeyDown(KEY_RIGHT) then
+    if input_system:GetKeyDown(input.KEY_D) or input_system:GetKeyDown(input.KEY_RIGHT) then
         moveDir = moveDir + math3d.Vector3.RIGHT * speedX
         animatedSprite:SetFlipX(true) -- Flip sprite (flip animation on the X axis)
     end
 
-    if not moveDir.Equals(math3d.Vector3.ZERO) then
+    if not moveDir:Equals(math3d.Vector3.ZERO) then
         speedY = speedX * self.moveSpeedScale_
     end
-    if input_system:GetKeyDown(KEY_W) or input_system:GetKeyDown(KEY_UP) then
+    if input_system:GetKeyDown(input.KEY_W) or input_system:GetKeyDown(input.KEY_UP) then
         moveDir = moveDir + math3d.Vector3.UP * speedY
     end
-    if input_system:GetKeyDown(KEY_S) or input_system:GetKeyDown(KEY_DOWN) then
+    if input_system:GetKeyDown(input.KEY_S) or input_system:GetKeyDown(input.KEY_DOWN) then
         moveDir = moveDir + math3d.Vector3.DOWN * speedY
     end
     -- Move
-    if not moveDir.Equals(math3d.Vector3.ZERO) then
+    if not moveDir:Equals(math3d.Vector3.ZERO) then
         self.node:Translate(moveDir * timeStep)
     end
     -- Animate
-    if input_system:GetKeyDown(KEY_SPACE) then
+    if input_system:GetKeyDown(input.KEY_SPACE) then
         if animatedSprite:GetAnimation() ~= "attack" then
-            animatedSprite:SetAnimation("attack", LM_FORCE_LOOPED)
+            animatedSprite:SetAnimation("attack", LoopMode2D.FORCE_LOOPED)
         end
-    elseif not moveDir.Equals(math3d.Vector3.ZERO) then
+    elseif not moveDir:Equals(math3d.Vector3.ZERO) then
         if animatedSprite:GetAnimation() ~= "run" then
             animatedSprite:SetAnimation("run")
         end
@@ -273,6 +276,69 @@ function app:CreateSound()
     self.sound_attack = Audio.CreateEvent("event:/Scene/attack")
 end
 
+local VAR_MOVESPEED = "MoveSpeed"
+local VAR_ROTATESPEED = "RotateSpeed"
+local PIXEL_SIZE = 0.01
+function app:UpdateSprite(timeStep)
+    local halfWidth = graphics_system.width * 0.5 * PIXEL_SIZE
+    local halfHeight = graphics_system.height * 0.5 * PIXEL_SIZE
+    local position = self.sprite_node.position
+    local moveSpeed = self.sprite_node:GetVar(VAR_MOVESPEED):GetVector3()
+    local newPosition = position + moveSpeed * timeStep;
+    if newPosition.x < -halfWidth or newPosition.x > halfWidth then
+        newPosition.x = position.x;
+        moveSpeed.x = -moveSpeed.x;
+        self.sprite_node:SetVar(VAR_MOVESPEED, Variant(moveSpeed))
+    end
+    if newPosition.y < -halfHeight or newPosition.y > halfHeight then
+        newPosition.y = position.y;
+        moveSpeed.y = -moveSpeed.y;
+        self.sprite_node:SetVar(VAR_MOVESPEED, Variant(moveSpeed))
+    end
+
+    self.sprite_node:SetPosition(newPosition);
+
+    local rotateSpeed = self.sprite_node:GetVar(VAR_ROTATESPEED):GetFloat();
+    self.sprite_node:Roll(rotateSpeed * timeStep);
+end
+function app:TestSprite(scene)
+    local sprite = cache:GetResource("Sprite2D", "Urho2D/Aster.png")
+    local spriteNode = scene:CreateChild("StaticSprite2D")
+    spriteNode.position = math3d.Vector3(1, 1, 0)
+
+    local staticSprite = spriteNode:CreateComponent(StaticSprite2D.id)
+    -- Set random color
+    staticSprite:SetColor(math3d.Color(1.0, 1.0, 1.0, 1.0))
+    -- Set blend mode
+    staticSprite:SetBlendMode(graphic.BlendMode.ALPHA)
+    -- Set sprite
+    staticSprite:SetSprite(sprite)
+    staticSprite:SetOccluder(true)
+    staticSprite:SetLayer(-99)
+    -- Set move speed
+    spriteNode:SetVar(VAR_MOVESPEED, Variant(math3d.Vector3(math3d.Random(-2.0, 2.0), math3d.Random(-2.0, 2.0), 0.0)))
+    -- Set rotate speed
+    spriteNode:SetVar(VAR_ROTATESPEED, Variant(math3d.Random(-90.0, 90.0)))
+    self.sprite_node = spriteNode
+    local animationSet = cache:GetResource("AnimationSet2D", "Urho2D/GoldIcon.scml")
+
+    local spriteNode = scene:CreateChild("AnimatedSprite2D")
+    spriteNode.position = math3d.Vector3(0.0, 0.0, -1.0)
+
+    local animatedSprite = spriteNode:CreateComponent(AnimatedSprite2D.id)
+    -- Set animation
+    animatedSprite:SetAnimationSet(animationSet)
+    animatedSprite:SetAnimation("idle", LoopMode2D.DEFAULT) -- FORCE_LOOPED -- FORCE_CLAMPED
+
+    sprite = cache:GetResource("Sprite2D", "Urho2D/Stretchable.png")
+
+    local stretchSpriteNode = scene:CreateChild("stretchable sprite")
+    local stretchSprite = stretchSpriteNode:CreateComponent(StretchableSprite2D.id)
+    stretchSprite:SetSprite(sprite)
+    stretchSprite:SetBorder(math3d.IntRect(25, 25, 25, 25))
+    stretchSpriteNode:Translate2D(math3d.Vector2(2.0, 0.0))
+end
+
 local PIXEL_SIZE = 0.01
 function app:CreateScene(uiscene)
     self.uiscene = uiscene
@@ -289,20 +355,21 @@ function app:CreateScene(uiscene)
     self.camera         = camera
     self.camera_node    = cameraNode
     camera:SetOrthoSize(graphics_system.height * PIXEL_SIZE)
-    camera:SetZoom(2.0 * math.min(graphics_system.width / 1280.0, graphics_system.height() / 800.0))
+    camera.zoom = 1.0--2.0 * math.min(graphics_system.width / 1280.0, graphics_system.height / 800.0)
 
 
     local tmxFile = cache:GetResource("TmxFile2D", "Urho2D/Tilesets/atrium.tmx")
     local tileMapNode = scene:CreateChild("TileMap")
     local tileMap = tileMapNode:CreateComponent(TileMap2D.id)
     tileMap:SetTmxFile(tmxFile)
+    
+    sample2d:Init(scene)
     local info = tileMap:GetInfo()
-
     local spriteNode = sample2d:CreateCharacter(info, 0.0, math3d.Vector3(-5.0, 11.0, 0.0), 0.15)
     local character2d = spriteNode:CreateScriptObject("CharacterIsometric")
     self.character2d = character2d
-    character2d.moveSpeedScale_ = info.tileHeight_ / info.tileWidth_
-    character2d.zoom_ = camera:GetZoom()
+    character2d.moveSpeedScale_ = info.tile_height / info.tile_width
+    character2d.zoom_ = camera.zoom
 
     local tileMapLayer = tileMap:GetLayer(tileMap:GetNumLayers() - 1)
     sample2d:CreateCollisionShapesFromTMXObjects(tileMapNode, tileMapLayer, info)
@@ -365,15 +432,6 @@ local function HandleCollisionBegin(eventType, eventData)
             end
         end
     end
-end
-
-local function HandlePostUpdate(eventType, eventData)
-    if not app.character2d then
-        return
-    end
-    local character2DNode = app.character2d:GetNode()
-    local pos = character2DNode:GetPosition()
-    app.camera_node:SetPosition(math3d.Vector3(pos.x, pos.y, -10.0)) -- Camera tracks character
 end
 
 function app:Load(viewport, uiroot)

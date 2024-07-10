@@ -1,7 +1,7 @@
 -- can also implement in cpp
 local sample2d = {}
-local CAMERA_MIN_DIST<const> = 0.1
-local CAMERA_MAX_DIST<const> = 6.0
+local CAMERA_MIN_DIST = 0.1
+local CAMERA_MAX_DIST = 6.0
 function sample2d:Init(scene)
     self.scene = scene
 end
@@ -18,7 +18,7 @@ function sample2d:CreateCollisionShapesFromTMXObjects(tileMapNode, tileMapLayer,
         if objectType == TileMapObjectType2D.RECTANGLE then
             self:CreateRectangleShape(tileMapNode, tileMapObject, tileMapObject:GetSize(), info)
         elseif objectType == TileMapObjectType2D.ELLIPSE then
-            self:CreateCircleShape(tileMapNode, tileMapObject, tileMapObject:GetSize().x_ / 2, info) -- Ellipse is built as a Circle shape as it doesn't exist in Box2D
+            self:CreateCircleShape(tileMapNode, tileMapObject, tileMapObject:GetSize().x / 2, info) -- Ellipse is built as a Circle shape as it doesn't exist in Box2D
         elseif objectType == TileMapObjectType2D.POLYGON then
             self:CreatePolygonShape(tileMapNode, tileMapObject)
         elseif objectType == TileMapObjectType2D.POLYLINE then
@@ -33,7 +33,7 @@ function sample2d:CreateRectangleShape(node, object, size, info)
     if info.orientation_ == Orientation2D.ORTHOGONAL then
         shape:SetCenter(object:GetPosition() + size / 2)
     else
-        shape:SetCenter(object:GetPosition() + math3d.Vector2(info.tileWidth_ / 2, 0.0))
+        shape:SetCenter(object:GetPosition() + math3d.Vector2(info.tile_width / 2, 0.0))
         shape:SetAngle(45.0) -- If our tile map is isometric then shape is losange
     end
     shape:SetFriction(0.8)
@@ -49,7 +49,7 @@ function sample2d:CreateCircleShape(node, object, radius, info)
     if info.orientation_ == Orientation2D.ORTHOGONAL then
         shape:SetCenter(object:GetPosition() + size / 2)
     else
-        shape:SetCenter(object:GetPosition() + math3d.Vector2(info.tileWidth_ / 2, 0.0))
+        shape:SetCenter(object:GetPosition() + math3d.Vector2(info.tile_width / 2, 0.0))
     end
     shape:SetRadius(radius)
     shape:SetFriction(0.8)
@@ -344,17 +344,17 @@ function sample2d:Zoom(camera)
     local zoom = camera:GetZoom()
 
     if input_system:GetMouseMoveWheel() ~= 0 then
-        zoom = math3d.Clamp(zoom + input_system:GetMouseMoveWheel() * 0.1, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
+        zoom = math3d.ClampF(zoom + input_system:GetMouseMoveWheel() * 0.1, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
         camera:SetZoom(zoom)
     end
 
-    if input_system:GetKeyDown(KEY_PAGEUP) then
-        zoom = math3d.Clamp(zoom * 1.01, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
+    if input_system:GetKeyDown(input.KEY_PAGEUP) then
+        zoom = math3d.ClampF(zoom * 1.01, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
         camera:SetZoom(zoom)
     end
 
-    if input_system:GetKeyDown(KEY_PAGEDOWN) then
-        zoom = math3d.Clamp(zoom * 0.99, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
+    if input_system:GetKeyDown(input.KEY_PAGEDOWN) then
+        zoom = math3d.ClampF(zoom * 0.99, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
         camera:SetZoom(zoom)
     end
 
