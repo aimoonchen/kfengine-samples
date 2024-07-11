@@ -84,7 +84,7 @@ function app:OnPostUpdate(eventType, eventData)
     end
     local character2DNode = self.character2d:GetNode()
     local pos = character2DNode.position
-    self.camera_node:SetPosition(math3d.Vector3(pos.x, pos.y, -10.0)) -- Camera tracks character
+    self.camera_node.position = math3d.Vector3(pos.x, pos.y, -10.0) -- Camera tracks character
 end
 
 function app:OnPostRenderUpdate(eventType, eventData)
@@ -98,10 +98,41 @@ function app:OnPostRenderUpdate(eventType, eventData)
     end
 end
 
-CharacterIsometric = ScriptObject()
-
 local MOVE_SPEED_X = 4.0
+local LIFES = 3
+function app:ReloadScene(reInit)
+    local filename = self.sample2d.demoFilename_
+    if not reInit then
+        filename = filename + "InGame";
+    end
+    -- File loadFile(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + filename + ".xml", FILE_READ);
+    -- self.scene:LoadXML(loadFile);
+    -- After loading we have to reacquire the weak pointer to the CharacterIsometric component, as it has been recreated
+    -- Simply find the character's scene node by name as there's only one of them
+    local character2DNode = self.scene:GetChild("Imp", true)
+    -- if character2DNode then
+    --     self.character2d = character2DNode->GetComponent<CharacterIsometric>();
+    -- end
+    local character2D = self.character2d
+    -- Set what number to use depending whether reload is requested from 'PLAY' button (reInit=true) or 'F7' key (reInit=false)
+    local lifes = character2D.remainingLifes_
+    local coins = character2D.remainingCoins_
+    if reInit then
+        lifes = LIFES;
+        coins = character2D.maxCoins_
+    end
 
+    -- -- Update lifes UI
+    -- auto* ui = GetSubsystem<UI>();
+    -- Text* lifeText = static_cast<Text*>(GetUIRoot()->GetChild("LifeText", true));
+    -- lifeText->SetText(ea::to_string(lifes));
+
+    -- -- Update coins UI
+    -- Text* coinsText = static_cast<Text*>(GetUIRoot()->GetChild("CoinsText", true));
+    -- coinsText->SetText(ea::to_string(coins));
+end
+
+CharacterIsometric = ScriptObject()
 function CharacterIsometric:Start()
     -- Flag when player is wounded.
     self.wounded_ = false
@@ -358,8 +389,9 @@ end
 local PIXEL_SIZE = 0.01
 function app:CreateScene(uiscene)
     self.uiscene = uiscene
-    self.scene = Scene()
-    local scene = self.scene
+
+    local scene = Scene()
+    self.scene = scene
     scene:CreateComponent(Octree.id)
     scene:CreateComponent(DebugRenderer.id)
     local physicsWorld = scene:CreateComponent(PhysicsWorld2D.id)
@@ -368,11 +400,12 @@ function app:CreateScene(uiscene)
     local cameraNode = scene:CreateChild("Camera")
     local camera = cameraNode:CreateComponent(Camera.id)
     camera:SetOrthographic(true)
-    self.camera         = camera
-    self.camera_node    = cameraNode
     camera:SetOrthoSize(graphics_system.height * PIXEL_SIZE)
     camera.zoom = 1.0--2.0 * math.min(graphics_system.width / 1280.0, graphics_system.height / 800.0)
-
+    self.camera         = camera
+    self.camera_node    = cameraNode
+    
+    -- Create tile map from tmx file
     local tmxFile = cache:GetResource("TmxFile2D", "Urho2D/Tilesets/atrium.tmx")
     local tileMapNode = scene:CreateChild("TileMap")
     local tileMap = tileMapNode:CreateComponent(TileMap2D.id)
@@ -380,30 +413,34 @@ function app:CreateScene(uiscene)
     
     sample2d:Init(scene)
     local info = tileMap:GetInfo()
+    -- Create Spriter Imp character (from sample 33_SpriterAnimation)
     local spriteNode = sample2d:CreateCharacter(info, 0.0, math3d.Vector3(-5.0, 11.0, 0.0), 0.15)
     local character2d = spriteNode:CreateScriptObject("CharacterIsometric")
-    self.character2d = character2d
+    -- Scale character's speed on the Y axis according to tiles' aspect ratio
     character2d.moveSpeedScale_ = info.tile_height / info.tile_width
     character2d.zoom_ = camera.zoom
-
+    -- Generate physics collision shapes from the tmx file's objects located in "Physics" (top) layer
     local tileMapLayer = tileMap:GetLayer(tileMap:GetNumLayers() - 1)
     sample2d:CreateCollisionShapesFromTMXObjects(tileMapNode, tileMapLayer, info)
+    -- Instantiate enemies at each placeholder of "MovingEntities" layer (placeholders are Poly Line objects defining a path from points)
     sample2d:PopulateMovingEntities(tileMap:GetLayer(tileMap:GetNumLayers() - 2))
+    -- Instantiate coins to pick at each placeholder of "Coins" layer (placeholders for coins are Rectangle objects)
     local coinsLayer = tileMap:GetLayer(tileMap:GetNumLayers() - 3)
     sample2d:PopulateCoins(coinsLayer)
-
+    -- Init coins counters
     character2d.remainingCoins_ = coinsLayer:GetNumObjects()
     character2d.maxCoins_ = coinsLayer:GetNumObjects()
+    self.character2d = character2d
 end
 
 local function HandleCollisionBegin(eventType, eventData)
     -- Get colliding node
     --local hitNode = static_cast<Node*>(eventData[PhysicsBeginContact2D::P_NODEA].GetPtr())
     local hitNode = eventData[ParamType.P_NODEA]:GetPtr()
-    if hitNode:GetName() == "Imp" then
+    if hitNode.name == "Imp" then
         hitNode = eventData[ParamType.P_NODEB]:GetPtr()
     end
-    local nodeName = hitNode:GetName()
+    local nodeName = hitNode.name
     local character2DNode = app.scene:GetChild("Imp", true)
 
     -- Handle coins picking

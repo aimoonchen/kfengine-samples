@@ -3,6 +3,7 @@ local sample2d = {}
 local CAMERA_MIN_DIST = 0.1
 local CAMERA_MAX_DIST = 6.0
 function sample2d:Init(scene)
+    self.demoFilename_ = "Isometric2D"
     self.scene = scene
 end
 function sample2d:CreateCollisionShapesFromTMXObjects(tileMapNode, tileMapLayer, info)
