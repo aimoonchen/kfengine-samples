@@ -177,7 +177,7 @@ Mover = ScriptObject()
 
 function Mover:Start()
     self.speed_ = 0.8
-    self.currentPathID_ = 1
+    self.currentPathID_ = 2
     self.emitTime_ = 0.0
     self.fightTimer_ = 0.0
     self.flip_ = 0.0
@@ -194,7 +194,7 @@ function Mover:Update(timeStep)
     end
     local node_ = self.node
     -- Handle Orc states (idle/wounded/fighting)
-    if node_:GetName() == "Orc" then
+    if node_.name == "Orc" then
         local animatedSprite = node_:GetComponent(AnimatedSprite2D.id)
         local anim = "run";
 
@@ -219,7 +219,7 @@ function Mover:Update(timeStep)
                 end
             end
             -- Flip Orc animation according to speed, or player position when fighting
-            animatedSprite:SetFlipX(flip_ >= 0.0)
+            animatedSprite:SetFlipX(self.flip_ >= 0.0)
         end
         -- Animate
         if animatedSprite:GetAnimation() ~= anim then
@@ -233,19 +233,19 @@ function Mover:Update(timeStep)
     end
     -- Set direction and move to target
     local dir = self.path_[self.currentPathID_] - node_:GetPosition2D()
-    local dirNormal = dir.Normalized()
-    node_:Translate(math3d.Vector3(dirNormal.x, dirNormal.y, 0.0) * math3d.Abs(self.speed_) * timeStep)
-    self.flip_ = dir.x_;
+    local dirNormal = dir:Normalized()
+    node_:Translate(math3d.Vector3(dirNormal.x, dirNormal.y, 0.0) * math.abs(self.speed_) * timeStep)
+    self.flip_ = dir.x;
 
     -- Check for new target to reach
-    if math3d.Abs(dir.Length()) < 0.1 then
+    if math.abs(dir:Length()) < 0.1 then
         if self.speed_ > 0.0 then
-            if self.currentPathID_ + 1 < #self.path_ then
+            if self.currentPathID_ + 1 <= #self.path_ then
                 self.currentPathID_ = self.currentPathID_ + 1
             else
                 -- If loop, go to first waypoint, which equates to last one (and never reverse)
-                if self.path_[self.currentPathID_] == self.path_[0] then
-                    self.currentPathID_ = 1
+                if self.path_[self.currentPathID_] == self.path_[1] then
+                    self.currentPathID_ = 2
                     return
                 end
                 -- Reverse path if not looping
@@ -253,10 +253,10 @@ function Mover:Update(timeStep)
                 self.speed_ = -self.speed_;
             end
         else
-            if self.currentPathID_ - 1 >= 0 then
+            if self.currentPathID_ - 1 >= 1 then
                 self.currentPathID_ = self.currentPathID_ - 1
             else
-                self.currentPathID_ = 1
+                self.currentPathID_ = 2
                 self.speed_ = -self.speed_
             end
         end
@@ -365,7 +365,7 @@ function sample2d:CreatePathFromPoints(object, offset)
     local path = {}
     local num = object:GetNumPoints()
     for i = 0, num - 1 do
-        path.push_back(object:GetPoint(i) + offset)
+        path[#path + 1] = object:GetPoint(i) + offset
     end
     return path
 end

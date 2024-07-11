@@ -83,7 +83,7 @@ function app:OnPostUpdate(eventType, eventData)
         return
     end
     local character2DNode = self.character2d:GetNode()
-    local pos = character2DNode:GetPosition()
+    local pos = character2DNode.position
     self.camera_node:SetPosition(math3d.Vector3(pos.x, pos.y, -10.0)) -- Camera tracks character
 end
 
@@ -373,7 +373,6 @@ function app:CreateScene(uiscene)
     camera:SetOrthoSize(graphics_system.height * PIXEL_SIZE)
     camera.zoom = 1.0--2.0 * math.min(graphics_system.width / 1280.0, graphics_system.height / 800.0)
 
-
     local tmxFile = cache:GetResource("TmxFile2D", "Urho2D/Tilesets/atrium.tmx")
     local tileMapNode = scene:CreateChild("TileMap")
     local tileMap = tileMapNode:CreateComponent(TileMap2D.id)
@@ -400,9 +399,9 @@ end
 local function HandleCollisionBegin(eventType, eventData)
     -- Get colliding node
     --local hitNode = static_cast<Node*>(eventData[PhysicsBeginContact2D::P_NODEA].GetPtr())
-    local hitNode = eventData[ParamType.P_NODEA].GetPtr()
+    local hitNode = eventData[ParamType.P_NODEA]:GetPtr()
     if hitNode:GetName() == "Imp" then
-        hitNode = eventData[ParamType.P_NODEB].GetPtr()
+        hitNode = eventData[ParamType.P_NODEB]:GetPtr()
     end
     local nodeName = hitNode:GetName()
     local character2DNode = app.scene:GetChild("Imp", true)
@@ -424,7 +423,7 @@ local function HandleCollisionBegin(eventType, eventData)
     -- Handle interactions with enemies
     if nodeName == "Orc" then
         local animatedSprite = character2DNode:GetComponent(AnimatedSprite2D.id)
-        local deltaX = character2DNode:GetPosition().x_ - hitNode:GetPosition().x_
+        local deltaX = character2DNode.position.x - hitNode.position.x
 
         -- Orc killed if character is fighting in its direction when the contact occurs
         if animatedSprite:GetAnimation() == "attack" and (deltaX < 0 == animatedSprite:GetFlipX()) then
