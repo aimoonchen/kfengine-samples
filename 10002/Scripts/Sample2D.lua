@@ -213,7 +213,7 @@ function Mover:Update(timeStep)
             -- Handle fighting state
             if self.fightTimer_ > 0.0 then
                 anim = "attack"
-                self.flip_ = node_:GetScene():GetChild("Imp", true):GetPosition().x - node_:GetPosition().x
+                self.flip_ = node_:GetScene():GetChild("Imp", true).position.x - node_.position.x
                 self.fightTimer_ = self.fightTimer_ + timeStep
                 if self.fightTimer_ >= 3.0 then
                     self.fightTimer_ = 0.0 -- Reset

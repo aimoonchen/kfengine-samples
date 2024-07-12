@@ -34,7 +34,6 @@ function app:OnUpdate(eventType, eventData)
     end
 
     if input_system:GetMouseButtonDown(input.MOUSEB_RIGHT) then
-        onAttackBtn()
     end
 
     local controlDirection = math3d.Vector3.ZERO
@@ -225,7 +224,7 @@ function CharacterIsometric:HandleWoundedState(timeStep)
         body:SetAwake(true)
 
         -- Remove particle emitter
-        node_:GetChild("Emitter", true):Remove()
+        -- node_:GetChild("Emitter", true):Remove()
 
         -- Update lifes UI and counter
         self.remainingLifes_ = self.remainingLifes_ - 1
@@ -244,10 +243,10 @@ function CharacterIsometric:HandleWoundedState(timeStep)
         end
 
         -- Re-position the character to the nearest point
-        if node_:GetPosition().x_ < 15.0 then
-            node_:SetPosition(math3d.Vector3(-5.0, 11.0, 0.0))
+        if node_.position.x < 15.0 then
+            node_.position = math3d.Vector3(-5.0, 11.0, 0.0)
         else
-            node_:SetPosition(math3d.Vector3(18.8, 9.2, 0.0))
+            node_.position = math3d.Vector3(18.8, 9.2, 0.0)
         end
     end
 end
@@ -269,7 +268,7 @@ function CharacterIsometric:HandleDeath()
     input_system:SetMouseVisible(true)
 
     -- Put character outside of the scene and magnify him
-    self.node_:SetPosition(math3d.Vector3(-20.0, 0.0, 0.0))
+    self.node_.position = math3d.Vector3(-20.0, 0.0, 0.0)
     self.node_:SetScale(1.2)
 
     -- Play death animation once
@@ -436,9 +435,9 @@ end
 local function HandleCollisionBegin(eventType, eventData)
     -- Get colliding node
     --local hitNode = static_cast<Node*>(eventData[PhysicsBeginContact2D::P_NODEA].GetPtr())
-    local hitNode = eventData[ParamType.P_NODEA]:GetPtr()
+    local hitNode = eventData[ParamType.P_NODEA]:GetPtr("Node")
     if hitNode.name == "Imp" then
-        hitNode = eventData[ParamType.P_NODEB]:GetPtr()
+        hitNode = eventData[ParamType.P_NODEB]:GetPtr("Node")
     end
     local nodeName = hitNode.name
     local character2DNode = app.scene:GetChild("Imp", true)
