@@ -342,21 +342,21 @@ function sample2d:PopulateTriggers(triggersLayer)
 end
 
 function sample2d:Zoom(camera)
-    local zoom = camera:GetZoom()
+    local zoom = camera.zoom
 
     if input_system:GetMouseMoveWheel() ~= 0 then
         zoom = math3d.ClampF(zoom + input_system:GetMouseMoveWheel() * 0.1, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
-        camera:SetZoom(zoom)
+        camera.zoom = zoom
     end
 
     if input_system:GetKeyDown(input.KEY_PAGEUP) then
         zoom = math3d.ClampF(zoom * 1.01, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
-        camera:SetZoom(zoom)
+        camera.zoom = zoom
     end
 
     if input_system:GetKeyDown(input.KEY_PAGEDOWN) then
         zoom = math3d.ClampF(zoom * 0.99, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
-        camera:SetZoom(zoom)
+        camera.zoom = zoom
     end
 
     return zoom

@@ -15,11 +15,12 @@ end
 function app:OnUpdate(eventType, eventData)
     local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
 
-    local wheel = input_system:GetMouseMoveWheel()
-    if wheel ~= 0 then
-        self.camera_dist = math3d.ClampF(self.camera_dist - wheel * 0.25, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
-        self.camera_node.position = math3d.Vector3(0.0, 0.0, -self.camera_dist)
-    end
+    -- local wheel = input_system:GetMouseMoveWheel()
+    -- if wheel ~= 0 then
+    --     self.camera_dist = math3d.ClampF(self.camera_dist - wheel * 0.25, CAMERA_MIN_DIST, CAMERA_MAX_DIST)
+    --     self.camera_node.position = math3d.Vector3(0.0, 0.0, -self.camera_dist)
+    -- end
+    sample2d:Zoom(self.camera)
 
     if rmlui.context:IsMouseInteracting() or FairyGUI.IsFocusUI() then
         return
@@ -265,11 +266,11 @@ function CharacterIsometric:HandleDeath()
     -- static_cast<Text*>(ui:GetRoot():GetChild("PlayButton", true)):SetVisible(true)
 
     -- Show mouse cursor so that we can click
-    input_system:SetMouseVisible(true)
+    input_system.mouseVisible = true
 
     -- Put character outside of the scene and magnify him
-    self.node_.position = math3d.Vector3(-20.0, 0.0, 0.0)
-    self.node_:SetScale(1.2)
+    self.node.position = math3d.Vector3(-20.0, 0.0, 0.0)
+    self.node:SetScale(1.2)
 
     -- Play death animation once
     if animatedSprite:GetAnimation() ~= "dead" then
@@ -464,9 +465,9 @@ local function HandleCollisionBegin(eventType, eventData)
         -- Orc killed if character is fighting in its direction when the contact occurs
         if animatedSprite:GetAnimation() == "attack" and (deltaX < 0 == animatedSprite:GetFlipX()) then
             -- static_cast<Mover*>(hitNode:GetComponent<Mover>()):emitTime_ = 1
-            hitNode:GetGetScriptObject().emitTime_ = 1
+            hitNode:GetScriptObject().emitTime_ = 1
             if not hitNode:GetChild("Emitter", true) then
-                hitNode:GetComponent("RigidBody2D"):Remove() -- Remove Orc's body
+                hitNode:GetComponent(RigidBody2D.id):Remove() -- Remove Orc's body
                 -- sample2d:SpawnEffect(hitNode)
                 -- sample2d:PlaySoundEffect("BigExplosion.wav")
             end
