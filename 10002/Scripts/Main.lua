@@ -13,7 +13,7 @@ function app:GetName()
 end
 
 function app:OnUpdate(eventType, eventData)
-    local timeStep = eventData[ParamType.P_TIMESTEP]:GetFloat()
+    local timeStep = eventData[ParamType.Update.TimeStep]:GetFloat()
 
     -- local wheel = input_system:GetMouseMoveWheel()
     -- if wheel ~= 0 then
@@ -436,9 +436,9 @@ end
 local function HandleCollisionBegin(eventType, eventData)
     -- Get colliding node
     --local hitNode = static_cast<Node*>(eventData[PhysicsBeginContact2D::P_NODEA].GetPtr())
-    local hitNode = eventData[ParamType.P_NODEA]:GetPtr("Node")
+    local hitNode = eventData[ParamType.PhysicsBeginContact2D.NodeA]:GetPtr("Node")
     if hitNode.name == "Imp" then
-        hitNode = eventData[ParamType.P_NODEB]:GetPtr("Node")
+        hitNode = eventData[ParamType.PhysicsBeginContact2D.NodeB]:GetPtr("Node")
     end
     local nodeName = hitNode.name
     local character2DNode = app.scene:GetChild("Imp", true)
