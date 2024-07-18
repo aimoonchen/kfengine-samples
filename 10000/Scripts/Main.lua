@@ -310,7 +310,8 @@ local function CreateMap(scene, size, space)
         node.scale = scale
         local object = node:CreateComponent(StaticModel.id)
         object:SetModel(model)
-        object:SetMaterial(mtl:Clone())
+        local new_mtl = mtl:Clone()
+        object:SetMaterial(new_mtl)
         object:SetCastShadows(true)
     end
     create_wall("LeftWall", math3d.Vector3(-6.5, 0.5, 0.0), math3d.Vector3(1, 1, 14))
